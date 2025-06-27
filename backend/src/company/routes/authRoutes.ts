@@ -3,6 +3,11 @@ import { registerCompany, loginCompany } from "../controllers/authController";
 
 const router = express.Router();
 
+// ✅ TEST ROUTE
+router.get("/test", (_req, res) => {
+  res.json({ message: "API is working ✅" });
+});
+
 /**
  * @swagger
  * /api/company/register:
