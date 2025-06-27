@@ -1,0 +1,16 @@
+# Node.js
+node_modules/
+dist/
+
+# Env files (keep secrets out of GitHub!)
+.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript build info
+*.tsbuildinfo
