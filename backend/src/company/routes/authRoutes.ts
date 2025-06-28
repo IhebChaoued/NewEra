@@ -1,9 +1,12 @@
 import express from "express";
 import { registerCompany, loginCompany } from "../controllers/authController";
+import upload from "../../middlewares/uploadMiddleware";
 
 const router = express.Router();
 
-// ✅ TEST ROUTE
+/**
+ * ✅ Test route to verify API connectivity
+ */
 router.get("/test", (_req, res) => {
   res.json({ message: "API is working ✅" });
 });
@@ -17,7 +20,7 @@ router.get("/test", (_req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -34,13 +37,20 @@ router.get("/test", (_req, res) => {
  *               password:
  *                 type: string
  *                 example: securepassword123
+ *               logo:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Company registered successfully
  *       400:
  *         description: Company already exists
  */
-router.post("/register", registerCompany);
+router.post(
+  "/register",
+  upload.single("logo"), // ✅ Multer middleware for handling file upload
+  registerCompany
+);
 
 /**
  * @swagger
