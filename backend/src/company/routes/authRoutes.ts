@@ -5,13 +5,6 @@ import upload from "../../middlewares/uploadMiddleware";
 const router = express.Router();
 
 /**
- * ✅ Test route to verify API connectivity
- */
-router.get("/test", (_req, res) => {
-  res.json({ message: "API is working ✅" });
-});
-
-/**
  * @swagger
  * /api/company/register:
  *   post:
