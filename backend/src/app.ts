@@ -24,9 +24,11 @@ app.use("/api/company", companyRoutes); // Secure routes
 // Swagger docs route
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Basic test endpoint
+// Root health check endpoint.
 app.get("/", (_req, res) => {
-  res.send("✅ CaptureGet backend is running.");
+  res.status(200).json({
+    message: "✅ CaptureGet backend is running.",
+  });
 });
 
 export default app;
