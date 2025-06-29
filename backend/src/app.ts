@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import companyAuthRoutes from "./company/routes/authRoutes";
 import companyRoutes from "./company/routes/companyRoutes";
 import jobRoutes from "./company/routes/jobRoutes";
+import userRoutes from "./user/routes/userRoutes";
 
 // Swagger
 import swaggerUi from "swagger-ui-express";
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use("/api/company", companyAuthRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/user", userRoutes);
 
 // Swagger docs route
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
