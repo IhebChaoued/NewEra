@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import companyAuthRoutes from "./company/routes/authRoutes";
 import companyRoutes from "./company/routes/companyRoutes";
+import jobRoutes from "./company/routes/jobRoutes";
 
 // Swagger
 import swaggerUi from "swagger-ui-express";
@@ -19,7 +20,8 @@ app.use(express.json());
 
 // API routes
 app.use("/api/company", companyAuthRoutes);
-app.use("/api/company", companyRoutes); // Secure routes
+app.use("/api/company", companyRoutes);
+app.use("/api/jobs", jobRoutes);
 
 // Swagger docs route
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
