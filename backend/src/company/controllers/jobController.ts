@@ -34,7 +34,10 @@ export const createJob = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Job creation error:", error);
-    res.status(500).json({ message: "Failed to create job." });
+    res.status(500).json({
+      message: "Failed to create job.",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };
 
