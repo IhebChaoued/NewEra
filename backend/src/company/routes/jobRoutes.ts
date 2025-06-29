@@ -32,11 +32,11 @@ router.get("/:id", getJobById);
 router.post("/", verifyToken, createJob);
 
 /**
- * @route   PUT /api/jobs/:id
+ * @route   PATCH /api/jobs/:id
  * @desc    Update an existing job (must belong to logged-in company)
  * @access  Private (Company only)
  */
-router.put("/:id", verifyToken, updateJob);
+router.patch("/:id", verifyToken, updateJob);
 
 /**
  * @route   DELETE /api/jobs/:id
