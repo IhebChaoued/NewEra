@@ -7,10 +7,10 @@ import fs from "fs";
 
 /**
  * Handles company registration.
- * - Checks for existing email
+ * - Checks if email already exists
  * - Hashes password
  * - Uploads logo to Cloudinary (if provided)
- * - Saves company in database
+ * - Stores company in database
  */
 export const registerCompany = async (
   req: Request,
@@ -19,26 +19,26 @@ export const registerCompany = async (
   try {
     const { name, email, password } = req.body;
 
-    // Check if email already exists
+    // Check for duplicate email
     const existingCompany = await Company.findOne({ email });
     if (existingCompany) {
       res.status(400).json({ message: "Company already exists" });
       return;
     }
 
-    // Hash password
+    // Hash password for security
     const hashedPassword = await bcrypt.hash(password, 10);
 
     let logoUrl = "";
 
-    // If a file was uploaded, upload to Cloudinary
+    // If logo file uploaded, upload to Cloudinary
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "company_logos",
       });
       logoUrl = result.secure_url;
 
-      // Clean up temp file
+      // Remove local temp file after upload
       fs.unlinkSync(req.file.path);
     }
 
@@ -72,7 +72,7 @@ export const registerCompany = async (
 
 /**
  * Handles company login.
- * - Checks credentials
+ * - Validates credentials
  * - Issues JWT token
  */
 export const loginCompany = async (
@@ -98,9 +98,50 @@ export const loginCompany = async (
       expiresIn: "7d",
     });
 
-    res.status(200).json({ token, company });
+    res.status(200).json({
+      token,
+      company: {
+        id: company._id,
+        name: company.name,
+        email: company.email,
+        logo: company.logo,
+        createdAt: company.createdAt,
+      },
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error });
+  }
+};
+
+/**
+ * Retrieves the profile of the currently logged-in company.
+ * - Uses the userId from the verified JWT
+ * - Excludes sensitive data like password
+ */
+export const getCompanyProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const company = await Company.findById(req.userId).select(
+      "-password" // Exclude password field for security
+    );
+
+    if (!company) {
+      res.status(404).json({ message: "Company not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Company profile loaded successfully",
+      company,
+    });
+  } catch (error) {
+    console.error("Profile retrieval error:", error);
+    res.status(500).json({
+      message: "Failed to load company profile",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };

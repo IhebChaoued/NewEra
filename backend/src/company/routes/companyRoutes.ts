@@ -1,18 +1,14 @@
 import express from "express";
-import { verifyToken } from "../../middlewares/authMiddleware"; // Middleware to verify JWT
+import { verifyToken } from "../../middlewares/authMiddleware";
+import { getCompanyProfile } from "../controllers/authController";
 
 const router = express.Router();
 
 /**
  * @route   GET /api/company/profile
- * @desc    Access secured company profile route
- * @access  Private (JWT token required)
+ * @desc    Returns the logged-in company's profile.
+ * @access  Private (JWT required)
  */
-router.get("/profile", verifyToken, (req, res) => {
-  res.status(200).json({
-    message: "Bienvenue 👋 à votre espace entreprise sécurisé.",
-    userId: req.userId, // Provided by auth middleware
-  });
-});
+router.get("/profile", verifyToken, getCompanyProfile);
 
 export default router;
