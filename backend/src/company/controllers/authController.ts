@@ -6,39 +6,29 @@ import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 
 /**
- * Handles company registration.
- * - Checks if email already exists
+ * Registers a new company:
+ * - Checks for duplicate email
  * - Hashes password
- * - Uploads logo to Cloudinary (if provided)
- * - Stores company in database
+ * - Uploads logo to Cloudinary if provided
  */
-export const registerCompany = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const registerCompany = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check for duplicate email
     const existingCompany = await Company.findOne({ email });
     if (existingCompany) {
       res.status(400).json({ message: "Company already exists" });
       return;
     }
 
-    // Hash password for security
     const hashedPassword = await bcrypt.hash(password, 10);
 
     let logoUrl = "";
-
-    // If logo file uploaded, upload to Cloudinary
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "company_logos",
       });
       logoUrl = result.secure_url;
-
-      // Remove local temp file after upload
       fs.unlinkSync(req.file.path);
     }
 
@@ -71,14 +61,9 @@ export const registerCompany = async (
 };
 
 /**
- * Handles company login.
- * - Validates credentials
- * - Issues JWT token
+ * Authenticates a company and returns a JWT token.
  */
-export const loginCompany = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const loginCompany = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -98,16 +83,7 @@ export const loginCompany = async (
       expiresIn: "7d",
     });
 
-    res.status(200).json({
-      token,
-      company: {
-        id: company._id,
-        name: company.name,
-        email: company.email,
-        logo: company.logo,
-        createdAt: company.createdAt,
-      },
-    });
+    res.status(200).json({ token, company });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error });
@@ -115,19 +91,11 @@ export const loginCompany = async (
 };
 
 /**
- * Retrieves the profile of the currently logged-in company.
- * - Uses the userId from the verified JWT
- * - Excludes sensitive data like password
+ * Loads the logged-in company's profile.
  */
-export const getCompanyProfile = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getCompanyProfile = async (req: Request, res: Response) => {
   try {
-    const company = await Company.findById(req.userId).select(
-      "-password" // Exclude password field for security
-    );
-
+    const company = await Company.findById(req.userId).select("-password");
     if (!company) {
       res.status(404).json({ message: "Company not found" });
       return;
@@ -138,9 +106,78 @@ export const getCompanyProfile = async (
       company,
     });
   } catch (error) {
-    console.error("Profile retrieval error:", error);
+    console.error("Profile fetch error:", error);
     res.status(500).json({
-      message: "Failed to load company profile",
+      message: "Failed to load profile",
+      error: error instanceof Error ? error.message : error,
+    });
+  }
+};
+
+/**
+ * Updates the logged-in company's profile.
+ */
+export const updateCompanyProfile = async (req: Request, res: Response) => {
+  try {
+    const updates: any = {};
+    const { name, email, password } = req.body;
+
+    if (name) updates.name = name;
+    if (email) updates.email = email;
+    if (password) {
+      updates.password = await bcrypt.hash(password, 10);
+    }
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "company_logos",
+      });
+      updates.logo = result.secure_url;
+      fs.unlinkSync(req.file.path);
+    }
+
+    const updatedCompany = await Company.findByIdAndUpdate(
+      req.userId,
+      updates,
+      { new: true }
+    ).select("-password");
+
+    if (!updatedCompany) {
+      res.status(404).json({ message: "Company not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Company profile updated successfully",
+      company: updatedCompany,
+    });
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({
+      message: "Failed to update profile",
+      error: error instanceof Error ? error.message : error,
+    });
+  }
+};
+
+/**
+ * Deletes the logged-in company's account.
+ */
+export const deleteCompanyProfile = async (req: Request, res: Response) => {
+  try {
+    const company = await Company.findByIdAndDelete(req.userId);
+    if (!company) {
+      res.status(404).json({ message: "Company not found" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Company deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({
+      message: "Failed to delete company",
       error: error instanceof Error ? error.message : error,
     });
   }
