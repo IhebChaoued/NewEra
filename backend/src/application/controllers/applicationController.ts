@@ -1,23 +1,25 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Application from "../models/Application";
 import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 import User from "../../user/models/User";
 import Job from "../../company/models/Job";
+import { AppError } from "../../utils/errors";
 
 /**
  * User applies to a job.
- * - Uploads new CV if provided
- * - Otherwise uses CV from user's profile
  */
-export const createApplication = async (req: Request, res: Response) => {
+export const createApplication = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { jobId, message } = req.body;
 
     let cvUrl = "";
 
     if (req.file) {
-      // Upload the new CV to Cloudinary
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "application_cvs",
         resource_type: "raw",
@@ -25,7 +27,6 @@ export const createApplication = async (req: Request, res: Response) => {
       cvUrl = result.secure_url;
       fs.unlinkSync(req.file.path);
     } else {
-      // No new CV uploaded → fall back to user's existing CV
       const user = await User.findById(req.userId);
       if (user?.cvUrl) {
         cvUrl = user.cvUrl;
@@ -44,27 +45,22 @@ export const createApplication = async (req: Request, res: Response) => {
       application,
     });
   } catch (error) {
-    console.error("Application creation error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to submit application.", error: error });
+    next(error);
   }
 };
 
 /**
  * Company fetches all applications for its jobs.
- * Filters ONLY applications belonging to jobs posted by this company.
  */
 export const getApplicationsForCompany = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
-    // Find all jobs owned by this company
     const jobs = await Job.find({ companyId: req.userId }).select("_id");
     const jobIds = jobs.map((j) => j._id);
 
-    // Fetch applications linked to those jobs
     const applications = await Application.find({
       jobId: { $in: jobIds },
     })
@@ -76,18 +72,18 @@ export const getApplicationsForCompany = async (
       applications,
     });
   } catch (error) {
-    console.error("Fetch applications error:", error);
-    res.status(500).json({
-      message: "Failed to fetch applications.",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };
 
 /**
  * User fetches all applications they submitted.
  */
-export const getApplicationsForUser = async (req: Request, res: Response) => {
+export const getApplicationsForUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const applications = await Application.find({
       userId: req.userId,
@@ -98,18 +94,18 @@ export const getApplicationsForUser = async (req: Request, res: Response) => {
       applications,
     });
   } catch (error) {
-    console.error("Fetch user applications error:", error);
-    res.status(500).json({
-      message: "Failed to fetch user applications.",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };
 
 /**
  * Company updates application status.
  */
-export const updateApplicationStatus = async (req: Request, res: Response) => {
+export const updateApplicationStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { status } = req.body;
 
@@ -120,8 +116,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
     );
 
     if (!application) {
-      res.status(404).json({ message: "Application not found." });
-      return;
+      throw new AppError("Application not found.", 404);
     }
 
     res.status(200).json({
@@ -129,32 +124,27 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
       application,
     });
   } catch (error) {
-    console.error("Update application error:", error);
-    res.status(500).json({
-      message: "Failed to update application.",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };
 
 /**
  * Optional: delete an application.
  */
-export const deleteApplication = async (req: Request, res: Response) => {
+export const deleteApplication = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const app = await Application.findByIdAndDelete(req.params.id);
 
     if (!app) {
-      res.status(404).json({ message: "Application not found." });
-      return;
+      throw new AppError("Application not found.", 404);
     }
 
     res.status(200).json({ message: "Application deleted." });
   } catch (error) {
-    console.error("Delete application error:", error);
-    res.status(500).json({
-      message: "Failed to delete application.",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };

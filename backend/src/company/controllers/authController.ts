@@ -1,21 +1,25 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Company from "../models/Company";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../../config/cloudinary";
 import fs from "fs";
+import { AppError } from "../../utils/errors";
 
 /**
  * Registers a new company.
  */
-export const registerCompany = async (req: Request, res: Response) => {
+export const registerCompany = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { name, email, password } = req.body;
 
     const existingCompany = await Company.findOne({ email });
     if (existingCompany) {
-      res.status(400).json({ message: "Company already exists" });
-      return;
+      throw new AppError("Company already exists", 400);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -49,31 +53,29 @@ export const registerCompany = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({
-      message: "Registration failed",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };
 
 /**
  * Authenticates a company and returns a JWT token.
  */
-export const loginCompany = async (req: Request, res: Response) => {
+export const loginCompany = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { email, password } = req.body;
 
     const company = await Company.findOne({ email });
     if (!company) {
-      res.status(404).json({ message: "Company not found" });
-      return;
+      throw new AppError("Company not found", 404);
     }
 
     const isMatch = await bcrypt.compare(password, company.password);
     if (!isMatch) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
+      throw new AppError("Invalid credentials", 401);
     }
 
     const token = jwt.sign(
@@ -93,20 +95,22 @@ export const loginCompany = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Login failed", error });
+    next(error);
   }
 };
 
 /**
  * Loads the logged-in company's profile.
  */
-export const getCompanyProfile = async (req: Request, res: Response) => {
+export const getCompanyProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const company = await Company.findById(req.userId).select("-password");
     if (!company) {
-      res.status(404).json({ message: "Company not found" });
-      return;
+      throw new AppError("Company not found", 404);
     }
 
     res.status(200).json({
@@ -114,18 +118,18 @@ export const getCompanyProfile = async (req: Request, res: Response) => {
       company,
     });
   } catch (error) {
-    console.error("Profile fetch error:", error);
-    res.status(500).json({
-      message: "Failed to load profile",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };
 
 /**
  * Updates the logged-in company's profile.
  */
-export const updateCompanyProfile = async (req: Request, res: Response) => {
+export const updateCompanyProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const updates: any = {};
     const { name, email, password } = req.body;
@@ -151,8 +155,7 @@ export const updateCompanyProfile = async (req: Request, res: Response) => {
     ).select("-password");
 
     if (!updatedCompany) {
-      res.status(404).json({ message: "Company not found" });
-      return;
+      throw new AppError("Company not found", 404);
     }
 
     res.status(200).json({
@@ -160,33 +163,28 @@ export const updateCompanyProfile = async (req: Request, res: Response) => {
       company: updatedCompany,
     });
   } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).json({
-      message: "Failed to update profile",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };
 
 /**
  * Deletes the logged-in company's account.
  */
-export const deleteCompanyProfile = async (req: Request, res: Response) => {
+export const deleteCompanyProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const company = await Company.findByIdAndDelete(req.userId);
     if (!company) {
-      res.status(404).json({ message: "Company not found" });
-      return;
+      throw new AppError("Company not found", 404);
     }
 
     res.status(200).json({
       message: "Company deleted successfully",
     });
   } catch (error) {
-    console.error("Delete error:", error);
-    res.status(500).json({
-      message: "Failed to delete company",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };

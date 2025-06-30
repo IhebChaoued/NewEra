@@ -6,11 +6,10 @@ import companyAuthRoutes from "./company/routes/authRoutes";
 import companyRoutes from "./company/routes/companyRoutes";
 import jobRoutes from "./company/routes/jobRoutes";
 import userRoutes from "./user/routes/userRoutes";
-
-// Swagger
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
 import applicationRoutes from "./application/routes/applicationRoutes";
+import { errorHandler } from "./middlewares/errorMiddleware";
 
 dotenv.config();
 
@@ -36,5 +35,8 @@ app.get("/", (_req, res) => {
     message: "✅ CaptureGet backend is running.",
   });
 });
+
+// Global error handler - keep this last to catch errors from all routes
+app.use(errorHandler);
 
 export default app;

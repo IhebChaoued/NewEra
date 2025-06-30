@@ -1,10 +1,15 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Job from "../models/Job";
+import { AppError } from "../../utils/errors";
 
 /**
  * Creates a new job linked to the logged-in company.
  */
-export const createJob = async (req: Request, res: Response) => {
+export const createJob = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const {
       title,
@@ -16,7 +21,6 @@ export const createJob = async (req: Request, res: Response) => {
       blurry,
     } = req.body;
 
-    // Create new job
     const job = await Job.create({
       title,
       description,
@@ -33,49 +37,53 @@ export const createJob = async (req: Request, res: Response) => {
       job,
     });
   } catch (error) {
-    console.error("Job creation error:", error);
-    res.status(500).json({
-      message: "Failed to create job.",
-      error: error instanceof Error ? error.message : error,
-    });
+    next(error);
   }
 };
 
 /**
  * Returns all jobs for public browsing.
- * Blurry flag determines whether details should be visible.
  */
-export const getAllJobs = async (_req: Request, res: Response) => {
+export const getAllJobs = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const jobs = await Job.find();
     res.status(200).json(jobs);
   } catch (error) {
-    console.error("Fetch jobs error:", error);
-    res.status(500).json({ message: "Failed to fetch jobs." });
+    next(error);
   }
 };
 
 /**
  * Returns details of a single job.
  */
-export const getJobById = async (req: Request, res: Response) => {
+export const getJobById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const job = await Job.findById(req.params.id);
     if (!job) {
-      res.status(404).json({ message: "Job not found." });
-      return;
+      throw new AppError("Job not found.", 404);
     }
     res.status(200).json(job);
   } catch (error) {
-    console.error("Fetch single job error:", error);
-    res.status(500).json({ message: "Failed to fetch job." });
+    next(error);
   }
 };
 
 /**
  * Updates a job if owned by the logged-in company.
  */
-export const updateJob = async (req: Request, res: Response) => {
+export const updateJob = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const job = await Job.findOneAndUpdate(
       { _id: req.params.id, companyId: req.userId },
@@ -84,8 +92,7 @@ export const updateJob = async (req: Request, res: Response) => {
     );
 
     if (!job) {
-      res.status(404).json({ message: "Job not found or not authorized." });
-      return;
+      throw new AppError("Job not found or not authorized.", 404);
     }
 
     res.status(200).json({
@@ -93,15 +100,18 @@ export const updateJob = async (req: Request, res: Response) => {
       job,
     });
   } catch (error) {
-    console.error("Update job error:", error);
-    res.status(500).json({ message: "Failed to update job." });
+    next(error);
   }
 };
 
 /**
  * Deletes a job if owned by the logged-in company.
  */
-export const deleteJob = async (req: Request, res: Response) => {
+export const deleteJob = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const job = await Job.findOneAndDelete({
       _id: req.params.id,
@@ -109,13 +119,11 @@ export const deleteJob = async (req: Request, res: Response) => {
     });
 
     if (!job) {
-      res.status(404).json({ message: "Job not found or not authorized." });
-      return;
+      throw new AppError("Job not found or not authorized.", 404);
     }
 
     res.status(200).json({ message: "Job deleted successfully." });
   } catch (error) {
-    console.error("Delete job error:", error);
-    res.status(500).json({ message: "Failed to delete job." });
+    next(error);
   }
 };
