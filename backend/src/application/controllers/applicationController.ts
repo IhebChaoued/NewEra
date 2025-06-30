@@ -3,6 +3,7 @@ import Application from "../models/Application";
 import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 import User from "../../user/models/User";
+import Job from "../../company/models/Job";
 
 /**
  * User applies to a job.
@@ -31,10 +32,9 @@ export const createApplication = async (req: Request, res: Response) => {
       }
     }
 
-    // Create new application
     const application = await Application.create({
       jobId,
-      userId: req.userId, // comes from verifyToken middleware
+      userId: req.userId,
       message,
       cvUrl,
     });
@@ -53,21 +53,34 @@ export const createApplication = async (req: Request, res: Response) => {
 
 /**
  * Company fetches all applications for its jobs.
+ * Filters ONLY applications belonging to jobs posted by this company.
  */
 export const getApplicationsForCompany = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const applications = await Application.find()
+    // Find all jobs owned by this company
+    const jobs = await Job.find({ companyId: req.userId }).select("_id");
+    const jobIds = jobs.map((j) => j._id);
+
+    // Fetch applications linked to those jobs
+    const applications = await Application.find({
+      jobId: { $in: jobIds },
+    })
       .populate("jobId")
       .populate("userId");
 
-    // In real use, you'd filter only apps for the logged-in company’s jobs
-    res.status(200).json(applications);
+    res.status(200).json({
+      message: "Applications fetched successfully.",
+      applications,
+    });
   } catch (error) {
     console.error("Fetch applications error:", error);
-    res.status(500).json({ message: "Failed to fetch applications." });
+    res.status(500).json({
+      message: "Failed to fetch applications.",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };
 
@@ -79,10 +92,17 @@ export const getApplicationsForUser = async (req: Request, res: Response) => {
     const applications = await Application.find({
       userId: req.userId,
     }).populate("jobId");
-    res.status(200).json(applications);
+
+    res.status(200).json({
+      message: "User applications fetched successfully.",
+      applications,
+    });
   } catch (error) {
     console.error("Fetch user applications error:", error);
-    res.status(500).json({ message: "Failed to fetch user applications." });
+    res.status(500).json({
+      message: "Failed to fetch user applications.",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };
 
@@ -110,7 +130,10 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Update application error:", error);
-    res.status(500).json({ message: "Failed to update application." });
+    res.status(500).json({
+      message: "Failed to update application.",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };
 
@@ -129,6 +152,9 @@ export const deleteApplication = async (req: Request, res: Response) => {
     res.status(200).json({ message: "Application deleted." });
   } catch (error) {
     console.error("Delete application error:", error);
-    res.status(500).json({ message: "Failed to delete application." });
+    res.status(500).json({
+      message: "Failed to delete application.",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 };
