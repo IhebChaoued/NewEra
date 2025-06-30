@@ -6,10 +6,7 @@ import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 
 /**
- * Registers a new company:
- * - Checks for duplicate email
- * - Hashes password
- * - Uploads logo to Cloudinary if provided
+ * Registers a new company.
  */
 export const registerCompany = async (req: Request, res: Response) => {
   try {
@@ -79,11 +76,22 @@ export const loginCompany = async (req: Request, res: Response) => {
       return;
     }
 
-    const token = jwt.sign({ id: company._id }, process.env.JWT_SECRET!, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: company._id, role: "company" },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
 
-    res.status(200).json({ token, company });
+    res.status(200).json({
+      token,
+      company: {
+        id: company._id,
+        name: company.name,
+        email: company.email,
+        logo: company.logo,
+        createdAt: company.createdAt,
+      },
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error });

@@ -63,7 +63,7 @@ export const registerUser = async (req: Request, res: Response) => {
 };
 
 /**
- * Logs in a user.
+ * Logs in a user and issues a JWT token.
  */
 export const loginUser = async (req: Request, res: Response) => {
   try {
@@ -89,7 +89,19 @@ export const loginUser = async (req: Request, res: Response) => {
       }
     );
 
-    res.status(200).json({ token, user });
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        cvUrl: user.cvUrl,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (error) {
     console.error("Login user error:", error);
     res.status(500).json({
@@ -106,7 +118,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.userId).select("-password");
     if (!user) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "User not found." });
       return;
     }
 
