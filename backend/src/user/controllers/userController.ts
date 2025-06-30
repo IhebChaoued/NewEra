@@ -32,7 +32,7 @@ export const registerUser = async (
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "user_cvs",
-        resource_type: "raw",
+        resource_type: "raw", // allow PDFs, docs, etc.
       });
       cvUrl = result.secure_url;
       fs.unlinkSync(req.file.path);
@@ -94,11 +94,52 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       expiresIn: "7d",
     });
 
-    res.status(200).json({ token, user });
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        cvUrl: user.cvUrl,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (error) {
     console.error("Login user error:", error);
     res.status(500).json({
       message: "Login failed",
+      error: error instanceof Error ? error.message : error,
+    });
+  }
+};
+
+/**
+ * Loads the profile of the logged-in user:
+ * - Returns user data except sensitive fields
+ */
+export const getUserProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const user = await User.findById(req.userId).select("-password -__v");
+
+    if (!user) {
+      res.status(404).json({ message: "User not found." });
+      return;
+    }
+
+    res.status(200).json({
+      message: "User profile loaded successfully.",
+      user,
+    });
+  } catch (error) {
+    console.error("Fetch user profile error:", error);
+    res.status(500).json({
+      message: "Failed to load user profile.",
       error: error instanceof Error ? error.message : error,
     });
   }
