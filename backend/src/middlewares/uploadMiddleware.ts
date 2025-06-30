@@ -14,17 +14,26 @@ const storage = multer.diskStorage({
   },
 });
 
-// Limits file size to ~5MB and restricts file types (example)
+/**
+ * File filter that accepts common images and document types:
+ * - Images: PNG, JPG, JPEG
+ * - Docs: PDF, DOC, DOCX
+ */
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // ~5MB
   fileFilter: (_req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png/;
+    const allowedExts = [".jpeg", ".jpg", ".png", ".pdf", ".doc", ".docx"];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedTypes.test(ext)) {
+
+    if (allowedExts.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error("Only images are allowed"));
+      cb(
+        new Error(
+          "Only images (jpeg, jpg, png) or documents (pdf, doc, docx) are allowed."
+        )
+      );
     }
   },
 });
