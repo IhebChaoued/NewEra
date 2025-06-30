@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyToken } from "../../middlewares/authMiddleware";
+import { verifyToken, isCompany } from "../../middlewares/authMiddleware";
 import {
   createJob,
   getAllJobs,
@@ -29,20 +29,20 @@ router.get("/:id", getJobById);
  * @desc    Create a new job posting
  * @access  Private (Company only)
  */
-router.post("/", verifyToken, createJob);
+router.post("/", verifyToken, isCompany, createJob);
 
 /**
  * @route   PATCH /api/jobs/:id
  * @desc    Update an existing job (must belong to logged-in company)
  * @access  Private (Company only)
  */
-router.patch("/:id", verifyToken, updateJob);
+router.patch("/:id", verifyToken, isCompany, updateJob);
 
 /**
  * @route   DELETE /api/jobs/:id
  * @desc    Delete an existing job (must belong to logged-in company)
  * @access  Private (Company only)
  */
-router.delete("/:id", verifyToken, deleteJob);
+router.delete("/:id", verifyToken, isCompany, deleteJob);
 
 export default router;

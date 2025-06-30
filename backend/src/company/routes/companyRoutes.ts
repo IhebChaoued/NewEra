@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyToken } from "../../middlewares/authMiddleware";
+import { verifyToken, isCompany } from "../../middlewares/authMiddleware";
 import {
   getCompanyProfile,
   updateCompanyProfile,
@@ -14,7 +14,9 @@ const router = express.Router();
  * @desc Get company profile
  * @access Private
  */
-router.get("/profile", verifyToken, getCompanyProfile);
+router.get("/profile", verifyToken, isCompany, getCompanyProfile);
+router.put("/profile", verifyToken, isCompany, updateCompanyProfile);
+router.delete("/profile", verifyToken, isCompany, deleteCompanyProfile);
 
 /**
  * @route PATCH /api/company/profile

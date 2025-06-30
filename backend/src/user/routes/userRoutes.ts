@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyToken } from "../../middlewares/authMiddleware";
+import { verifyToken, isUser } from "../../middlewares/authMiddleware";
 import upload from "../../middlewares/uploadMiddleware";
 import {
   registerUser,
@@ -24,7 +24,15 @@ router.post("/login", loginUser);
 /**
  * @route   GET /api/users/profile
  */
-router.get("/profile", verifyToken, getUserProfile);
+router.get("/profile", verifyToken, isUser, getUserProfile);
+router.put(
+  "/profile",
+  verifyToken,
+  isUser,
+  upload.single("cv"),
+  updateUserProfile
+);
+router.delete("/profile", verifyToken, isUser, deleteUserAccount);
 
 /**
  * @route   PUT /api/users/profile
