@@ -26,6 +26,11 @@ const CompanySchema = new mongoose.Schema(
       type: String,
       default: "", // Cloudinary URL will be saved here
     },
+    role: {
+      type: String,
+      enum: ["company"],
+      default: "company",
+    },
   },
   {
     timestamps: true,

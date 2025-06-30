@@ -11,6 +11,7 @@ export interface IUser extends Document {
   password: string;
   avatar?: string;
   cvUrl?: string;
+  role: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -51,6 +52,11 @@ const UserSchema = new Schema<IUser>(
     cvUrl: {
       type: String,
       default: "",
+    },
+    role: {
+      type: String,
+      enum: ["user"],
+      default: "user",
     },
   },
   { timestamps: true }
