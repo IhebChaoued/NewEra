@@ -1,17 +1,42 @@
 import { Request, Response } from "express";
 import Application from "../models/Application";
+import cloudinary from "../../config/cloudinary";
+import fs from "fs";
+import User from "../../user/models/User";
 
 /**
  * User applies to a job.
+ * - Uploads new CV if provided
+ * - Otherwise uses CV from user's profile
  */
 export const createApplication = async (req: Request, res: Response) => {
   try {
     const { jobId, message } = req.body;
 
+    let cvUrl = "";
+
+    if (req.file) {
+      // Upload the new CV to Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "application_cvs",
+        resource_type: "raw",
+      });
+      cvUrl = result.secure_url;
+      fs.unlinkSync(req.file.path);
+    } else {
+      // No new CV uploaded → fall back to user's existing CV
+      const user = await User.findById(req.userId);
+      if (user?.cvUrl) {
+        cvUrl = user.cvUrl;
+      }
+    }
+
+    // Create new application
     const application = await Application.create({
       jobId,
-      userId: req.userId, // Comes from verifyToken middleware
+      userId: req.userId, // comes from verifyToken middleware
       message,
+      cvUrl,
     });
 
     res.status(201).json({
@@ -20,7 +45,9 @@ export const createApplication = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Application creation error:", error);
-    res.status(500).json({ message: "Failed to submit application." });
+    res
+      .status(500)
+      .json({ message: "Failed to submit application.", error: error });
   }
 };
 
@@ -36,7 +63,7 @@ export const getApplicationsForCompany = async (
       .populate("jobId")
       .populate("userId");
 
-    // In real use, you'd filter only apps for the logged-in company’s jobs.
+    // In real use, you'd filter only apps for the logged-in company’s jobs
     res.status(200).json(applications);
   } catch (error) {
     console.error("Fetch applications error:", error);
@@ -88,7 +115,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
 };
 
 /**
- * Optional: delete an application
+ * Optional: delete an application.
  */
 export const deleteApplication = async (req: Request, res: Response) => {
   try {

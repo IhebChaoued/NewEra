@@ -8,6 +8,7 @@ export interface IApplication extends Document {
   jobId: mongoose.Types.ObjectId;
   message: string;
   status: "pending" | "in_progress" | "qualified" | "not_qualified";
+  cvUrl?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -22,6 +23,7 @@ const ApplicationSchema = new Schema<IApplication>(
       enum: ["pending", "in_progress", "qualified", "not_qualified"],
       default: "pending",
     },
+    cvUrl: { type: String, default: "" }, // NEW: store the CV link
   },
   { timestamps: true }
 );

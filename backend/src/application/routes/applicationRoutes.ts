@@ -7,6 +7,7 @@ import {
   updateApplicationStatus,
   deleteApplication,
 } from "../controllers/applicationController";
+import upload from "../../middlewares/uploadMiddleware";
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const router = express.Router();
  * @desc    User applies to a job
  * @access  Private
  */
-router.post("/", verifyToken, createApplication);
+router.post("/", verifyToken, upload.single("cv"), createApplication);
 
 /**
  * @route   GET /api/applications/user
