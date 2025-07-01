@@ -6,6 +6,11 @@ import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 import { AppError } from "../../utils/errors";
 import { extractPublicId } from "../../utils/cloudinary";
+import {
+  registerCompanySchema,
+  loginCompanySchema,
+  updateCompanySchema,
+} from "../validators/companyValidators";
 
 /**
  * Registers a new company.
@@ -16,6 +21,9 @@ export const registerCompany = async (
   next: NextFunction
 ) => {
   try {
+    // ✅ Validate incoming data
+    await registerCompanySchema.validateAsync(req.body);
+
     const { name, email, password } = req.body;
 
     const existingCompany = await Company.findOne({ email });
@@ -67,6 +75,9 @@ export const loginCompany = async (
   next: NextFunction
 ) => {
   try {
+    // ✅ Validate login input
+    await loginCompanySchema.validateAsync(req.body);
+
     const { email, password } = req.body;
 
     const company = await Company.findOne({ email });
@@ -134,6 +145,9 @@ export const updateCompanyProfile = async (
   next: NextFunction
 ) => {
   try {
+    // ✅ Validate update input
+    await updateCompanySchema.validateAsync(req.body);
+
     const updates: any = {};
     const { name, email, password } = req.body;
 
@@ -144,7 +158,6 @@ export const updateCompanyProfile = async (
     }
 
     if (req.file) {
-      // Find existing company to delete old logo
       const existingCompany = await Company.findById(req.userId);
       if (existingCompany?.logo) {
         const publicId = extractPublicId(existingCompany.logo, "company_logos");

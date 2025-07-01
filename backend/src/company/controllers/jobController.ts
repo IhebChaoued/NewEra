@@ -4,6 +4,7 @@ import Job from "../models/Job";
 import Application from "../../application/models/Application";
 import JobStats from "../models/JobStats";
 import { AppError } from "../../utils/errors";
+import { createJobSchema, updateJobSchema } from "../validators/jobValidators";
 
 /**
  * Creates a new job linked to the logged-in company.
@@ -14,6 +15,12 @@ export const createJob = async (
   next: NextFunction
 ) => {
   try {
+    // ✅ Validate request body
+    const { error } = createJobSchema.validate(req.body);
+    if (error) {
+      throw new AppError(error.details[0].message, 400);
+    }
+
     const {
       title,
       description,
@@ -103,6 +110,12 @@ export const updateJob = async (
   next: NextFunction
 ) => {
   try {
+    // ✅ Validate update fields
+    const { error } = updateJobSchema.validate(req.body);
+    if (error) {
+      throw new AppError(error.details[0].message, 400);
+    }
+
     const job = await Job.findOneAndUpdate(
       { _id: req.params.id, companyId: req.userId },
       req.body,
@@ -132,7 +145,6 @@ export const deleteJob = async (
   next: NextFunction
 ) => {
   try {
-    // Check if the job exists and belongs to the logged-in company
     const job = await Job.findOne({
       _id: req.params.id,
       companyId: req.userId,
@@ -142,7 +154,7 @@ export const deleteJob = async (
       throw new AppError("Job not found or not authorized.", 404);
     }
 
-    // Aggregate application stats for this job
+    // Aggregate application stats
     const pipeline = [
       { $match: { jobId: new mongoose.Types.ObjectId(req.params.id) } },
       {
@@ -155,7 +167,6 @@ export const deleteJob = async (
 
     const aggregationResults = await Application.aggregate(pipeline);
 
-    // Initialize counts
     let stats = {
       pending: 0,
       in_progress: 0,
@@ -163,7 +174,6 @@ export const deleteJob = async (
       not_qualified: 0,
     };
 
-    // Populate counts from aggregation result
     for (const result of aggregationResults) {
       const status = result._id as
         | "pending"
@@ -176,7 +186,6 @@ export const deleteJob = async (
     const totalApplications =
       stats.pending + stats.in_progress + stats.qualified + stats.not_qualified;
 
-    // Save stats document
     await JobStats.create({
       jobTitle: job.title,
       companyId: job.companyId,
@@ -190,10 +199,8 @@ export const deleteJob = async (
       deletedAt: new Date(),
     });
 
-    // Delete all applications for this job
     await Application.deleteMany({ jobId: job._id });
 
-    // Delete the job itself
     await Job.findByIdAndDelete(job._id);
 
     res.status(200).json({

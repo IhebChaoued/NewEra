@@ -6,6 +6,11 @@ import cloudinary from "../../config/cloudinary";
 import User from "../models/User";
 import { AppError } from "../../utils/errors";
 import { extractPublicId } from "../../utils/cloudinary";
+import {
+  registerUserSchema,
+  loginUserSchema,
+  updateUserSchema,
+} from "../validators/userValidators";
 
 /**
  * Registers a new user.
@@ -16,6 +21,8 @@ export const registerUser = async (
   next: NextFunction
 ) => {
   try {
+    await registerUserSchema.validateAsync(req.body);
+
     const { firstName, middleName, lastName, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -72,6 +79,8 @@ export const loginUser = async (
   next: NextFunction
 ) => {
   try {
+    await loginUserSchema.validateAsync(req.body);
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -137,6 +146,8 @@ export const updateUserProfile = async (
   next: NextFunction
 ) => {
   try {
+    await updateUserSchema.validateAsync(req.body);
+
     const user = await User.findById(req.userId);
     if (!user) {
       throw new AppError("User not found.", 404);
@@ -154,7 +165,6 @@ export const updateUserProfile = async (
     }
 
     if (req.file) {
-      // Delete old CV if it exists
       if (user.cvUrl) {
         const publicId = extractPublicId(user.cvUrl, "user_cvs");
         if (publicId) {
