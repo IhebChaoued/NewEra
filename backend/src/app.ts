@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+
 import companyAuthRoutes from "./company/routes/authRoutes";
 import companyRoutes from "./company/routes/companyRoutes";
 import jobRoutes from "./company/routes/jobRoutes";
@@ -15,8 +18,20 @@ dotenv.config();
 
 const app = express();
 
-// Global middleware
+// Security middlewares
 app.use(cors());
+app.use(helmet());
+
+// Rate limiting middleware
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// Body parser
 app.use(express.json());
 
 // API routes
