@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
 import Job from "../models/Job";
+import Application from "../../application/models/Application";
+import JobStats from "../models/JobStats";
 import { AppError } from "../../utils/errors";
 
 /**
@@ -121,6 +124,7 @@ export const updateJob = async (
 
 /**
  * Deletes a job if owned by the logged-in company.
+ * Saves aggregated stats before removing the job and related applications.
  */
 export const deleteJob = async (
   req: Request,
@@ -128,7 +132,8 @@ export const deleteJob = async (
   next: NextFunction
 ) => {
   try {
-    const job = await Job.findOneAndDelete({
+    // Check if the job exists and belongs to the logged-in company
+    const job = await Job.findOne({
       _id: req.params.id,
       companyId: req.userId,
     });
@@ -137,7 +142,63 @@ export const deleteJob = async (
       throw new AppError("Job not found or not authorized.", 404);
     }
 
-    res.status(200).json({ message: "Job deleted successfully." });
+    // Aggregate application stats for this job
+    const pipeline = [
+      { $match: { jobId: new mongoose.Types.ObjectId(req.params.id) } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ];
+
+    const aggregationResults = await Application.aggregate(pipeline);
+
+    // Initialize counts
+    let stats = {
+      pending: 0,
+      in_progress: 0,
+      qualified: 0,
+      not_qualified: 0,
+    };
+
+    // Populate counts from aggregation result
+    for (const result of aggregationResults) {
+      const status = result._id as
+        | "pending"
+        | "in_progress"
+        | "qualified"
+        | "not_qualified";
+      stats[status] = result.count;
+    }
+
+    const totalApplications =
+      stats.pending + stats.in_progress + stats.qualified + stats.not_qualified;
+
+    // Save stats document
+    await JobStats.create({
+      jobTitle: job.title,
+      companyId: job.companyId,
+      location: job.location,
+      salaryRange: job.salaryRange,
+      totalApplications,
+      pending: stats.pending,
+      in_progress: stats.in_progress,
+      qualified: stats.qualified,
+      not_qualified: stats.not_qualified,
+      deletedAt: new Date(),
+    });
+
+    // Delete all applications for this job
+    await Application.deleteMany({ jobId: job._id });
+
+    // Delete the job itself
+    await Job.findByIdAndDelete(job._id);
+
+    res.status(200).json({
+      message: "Job deleted successfully. Stats archived.",
+    });
   } catch (error) {
     next(error);
   }

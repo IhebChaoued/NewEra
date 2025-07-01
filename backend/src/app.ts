@@ -13,6 +13,7 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
 import applicationRoutes from "./application/routes/applicationRoutes";
 import { errorHandler } from "./middlewares/errorMiddleware";
+import jobStatsRoutes from "./company/routes/jobStatsRoutes";
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use("/api/company", companyRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/job-stats", jobStatsRoutes);
 
 // Swagger docs route
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
