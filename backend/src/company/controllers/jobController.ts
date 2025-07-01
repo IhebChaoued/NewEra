@@ -42,16 +42,31 @@ export const createJob = async (
 };
 
 /**
- * Returns all jobs for public browsing.
+ * Returns all jobs for public browsing with pagination.
  */
 export const getAllJobs = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const jobs = await Job.find();
-    res.status(200).json(jobs);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Job.countDocuments();
+
+    const jobs = await Job.find().skip(skip).limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      total,
+      page,
+      limit,
+      totalPages,
+      results: jobs,
+    });
   } catch (error) {
     next(error);
   }

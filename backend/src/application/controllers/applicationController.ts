@@ -50,7 +50,7 @@ export const createApplication = async (
 };
 
 /**
- * Company fetches all applications for its jobs.
+ * Company fetches all applications for its jobs, paginated.
  */
 export const getApplicationsForCompany = async (
   req: Request,
@@ -58,17 +58,33 @@ export const getApplicationsForCompany = async (
   next: NextFunction
 ) => {
   try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Find all jobs owned by this company
     const jobs = await Job.find({ companyId: req.userId }).select("_id");
     const jobIds = jobs.map((j) => j._id);
+
+    const total = await Application.countDocuments({
+      jobId: { $in: jobIds },
+    });
 
     const applications = await Application.find({
       jobId: { $in: jobIds },
     })
       .populate("jobId")
-      .populate("userId");
+      .populate("userId")
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
-      message: "Applications fetched successfully.",
+      total,
+      page,
+      limit,
+      totalPages,
       applications,
     });
   } catch (error) {
@@ -77,7 +93,7 @@ export const getApplicationsForCompany = async (
 };
 
 /**
- * User fetches all applications they submitted.
+ * User fetches all applications they submitted, paginated.
  */
 export const getApplicationsForUser = async (
   req: Request,
@@ -85,12 +101,28 @@ export const getApplicationsForUser = async (
   next: NextFunction
 ) => {
   try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Application.countDocuments({
+      userId: req.userId,
+    });
+
     const applications = await Application.find({
       userId: req.userId,
-    }).populate("jobId");
+    })
+      .populate("jobId")
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
-      message: "User applications fetched successfully.",
+      total,
+      page,
+      limit,
+      totalPages,
       applications,
     });
   } catch (error) {
