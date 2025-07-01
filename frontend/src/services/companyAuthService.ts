@@ -1,34 +1,42 @@
 import axios from "axios";
-import { CompanyRegisterData, CompanyLoginData } from "../types/companyAuth";
+import { CompanyLoginData, CompanyRegisterData } from "../types/companyAuth";
+import { Company } from "../store/companyAuthStore";
 
-/**
- * Registers a company via the backend API.
- * Sends multipart/form-data if a logo is provided.
- */
-const register = async (data: CompanyRegisterData) => {
-  const formData = new FormData();
-  formData.append("name", data.name);
-  formData.append("email", data.email);
-  formData.append("password", data.password);
-  if (data.logo) {
-    formData.append("logo", data.logo);
-  }
+// API base URL
+const API_URL = "http://localhost:5000/api/company";
 
-  await axios.post("/api/company/register", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
-
-/**
- * Logs in a company via the backend API.
- * Sends JSON body.
- */
-const login = async (data: CompanyLoginData) => {
-  await axios.post("/api/company/login", data);
-};
-
-// ✅ Export a single object
 export const companyAuthService = {
-  register,
-  login,
+  // Register a company and return token + company info
+  async register(
+    data: CompanyRegisterData
+  ): Promise<{ token: string; company: Company }> {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+
+    if (data.logo) {
+      formData.append("logo", data.logo);
+    }
+
+    // ✅ tell axios what shape we expect in response
+    const res = await axios.post<{ token: string; company: Company }>(
+      `${API_URL}/register`,
+      formData
+    );
+
+    return res.data;
+  },
+
+  // Login and return token + company info
+  async login(
+    data: CompanyLoginData
+  ): Promise<{ token: string; company: Company }> {
+    const res = await axios.post<{ token: string; company: Company }>(
+      `${API_URL}/login`,
+      data
+    );
+
+    return res.data;
+  },
 };

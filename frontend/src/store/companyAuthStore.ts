@@ -2,31 +2,47 @@ import { create } from "zustand";
 import { CompanyLoginData, CompanyRegisterData } from "../types/companyAuth";
 import { companyAuthService } from "../services/companyAuthService";
 
-/**
- * Defines the shape of the auth store's state and methods.
- */
+// Represents a logged-in company
+export interface Company {
+  id: string;
+  name: string;
+  email: string;
+  logo?: string;
+  createdAt?: string;
+}
+
+// State shape for auth store
 export interface CompanyAuthState {
   isLoading: boolean;
   error: string | null;
+  company: Company | null;
+  token: string | null;
 
   register: (data: CompanyRegisterData) => Promise<void>;
   login: (data: CompanyLoginData) => Promise<void>;
+  logout: () => void;
+  loadStoredAuth: () => void;
 }
 
-/**
- * Zustand store for managing company authentication state.
- */
 export const useCompanyAuthStore = create<CompanyAuthState>((set) => ({
   isLoading: false,
   error: null,
+  company: null,
+  token: null,
 
-  /**
-   * Registers a new company via API.
-   */
+  // Registers a company and saves token + company info
   async register(data) {
     try {
       set({ isLoading: true, error: null });
-      await companyAuthService.register(data);
+      const res = await companyAuthService.register(data);
+
+      localStorage.setItem("companyToken", res.token);
+      localStorage.setItem("companyInfo", JSON.stringify(res.company));
+
+      set({
+        token: res.token,
+        company: res.company,
+      });
     } catch (error) {
       set({
         error:
@@ -39,13 +55,19 @@ export const useCompanyAuthStore = create<CompanyAuthState>((set) => ({
     }
   },
 
-  /**
-   * Logs in a company via API.
-   */
+  // Logs in a company and saves token + company info
   async login(data) {
     try {
       set({ isLoading: true, error: null });
-      await companyAuthService.login(data);
+      const res = await companyAuthService.login(data);
+
+      localStorage.setItem("companyToken", res.token);
+      localStorage.setItem("companyInfo", JSON.stringify(res.company));
+
+      set({
+        token: res.token,
+        company: res.company,
+      });
     } catch (error) {
       set({
         error:
@@ -55,6 +77,29 @@ export const useCompanyAuthStore = create<CompanyAuthState>((set) => ({
       });
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  // Logs out and clears storage
+  logout() {
+    localStorage.removeItem("companyToken");
+    localStorage.removeItem("companyInfo");
+    set({
+      token: null,
+      company: null,
+    });
+  },
+
+  // Loads auth info from localStorage on app startup
+  loadStoredAuth() {
+    const token = localStorage.getItem("companyToken");
+    const companyInfo = localStorage.getItem("companyInfo");
+
+    if (token && companyInfo) {
+      set({
+        token,
+        company: JSON.parse(companyInfo),
+      });
     }
   },
 }));
