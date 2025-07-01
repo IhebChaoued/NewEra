@@ -14,8 +14,22 @@ const swaggerOptions: swaggerJSDoc.Options = {
         description: "Local development server",
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
-  apis: ["./src/company/routes/*.ts"], // 📝 Scans route files for Swagger docs
+  apis: ["./src/company/routes/*.ts"],
 };
 
 export const swaggerSpec = swaggerJSDoc(swaggerOptions);
