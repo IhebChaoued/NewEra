@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import Company from "../models/Company";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 import { AppError } from "../../utils/errors";
@@ -82,7 +82,9 @@ export const loginCompany = async (
     const token = jwt.sign(
       { id: company._id, role: "company" },
       process.env.JWT_SECRET!,
-      { expiresIn: "7d" }
+      {
+        expiresIn: (process.env.JWT_EXPIRES_IN as string) || "7d",
+      } as SignOptions
     );
 
     res.status(200).json({

@@ -1,13 +1,16 @@
 import multer from "multer";
 import path from "path";
 
+const maxFileSize =
+  parseInt(process.env.UPLOAD_MAX_SIZE_MB || "5") * 1024 * 1024;
+
 /**
  * Configures Multer to store uploaded files in a temporary folder on disk.
  * This is required so Cloudinary can access the file to upload it.
  */
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, "uploads/"); // Local temp folder
+    cb(null, "uploads/");
   },
   filename: (_req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -21,7 +24,7 @@ const storage = multer.diskStorage({
  */
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // ~5MB
+  limits: { fileSize: maxFileSize },
   fileFilter: (_req, file, cb) => {
     const allowedExts = [".jpeg", ".jpg", ".png", ".pdf", ".doc", ".docx"];
     const ext = path.extname(file.originalname).toLowerCase();

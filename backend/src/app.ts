@@ -24,8 +24,8 @@ app.use(helmet());
 
 // Rate limiting middleware
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per window
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || "15") * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX || "100"),
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -51,7 +51,7 @@ app.get("/", (_req, res) => {
   });
 });
 
-// Global error handler - keep this last to catch errors from all routes
+// Global error handler
 app.use(errorHandler);
 
 export default app;
