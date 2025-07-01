@@ -5,6 +5,7 @@ import fs from "fs";
 import User from "../../user/models/User";
 import Job from "../../company/models/Job";
 import { AppError } from "../../utils/errors";
+import { extractPublicId } from "../../utils/cloudinary";
 
 /**
  * User applies to a job.
@@ -62,7 +63,6 @@ export const getApplicationsForCompany = async (
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    // Find all jobs owned by this company
     const jobs = await Job.find({ companyId: req.userId }).select("_id");
     const jobIds = jobs.map((j) => j._id);
 
@@ -161,7 +161,7 @@ export const updateApplicationStatus = async (
 };
 
 /**
- * Optional: delete an application.
+ * Deletes an application and its custom CV if exists.
  */
 export const deleteApplication = async (
   req: Request,
@@ -173,6 +173,13 @@ export const deleteApplication = async (
 
     if (!app) {
       throw new AppError("Application not found.", 404);
+    }
+
+    if (app.cvUrl) {
+      const publicId = extractPublicId(app.cvUrl, "application_cvs");
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+      }
     }
 
     res.status(200).json({ message: "Application deleted." });

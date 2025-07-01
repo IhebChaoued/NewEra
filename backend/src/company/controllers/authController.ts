@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 import { AppError } from "../../utils/errors";
+import { extractPublicId } from "../../utils/cloudinary";
 
 /**
  * Registers a new company.
@@ -141,6 +142,15 @@ export const updateCompanyProfile = async (
     }
 
     if (req.file) {
+      // Find existing company to delete old logo
+      const existingCompany = await Company.findById(req.userId);
+      if (existingCompany?.logo) {
+        const publicId = extractPublicId(existingCompany.logo, "company_logos");
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
+      }
+
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "company_logos",
       });
@@ -179,6 +189,13 @@ export const deleteCompanyProfile = async (
     const company = await Company.findByIdAndDelete(req.userId);
     if (!company) {
       throw new AppError("Company not found", 404);
+    }
+
+    if (company.logo) {
+      const publicId = extractPublicId(company.logo, "company_logos");
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
     }
 
     res.status(200).json({

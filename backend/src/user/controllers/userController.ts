@@ -5,6 +5,7 @@ import fs from "fs";
 import cloudinary from "../../config/cloudinary";
 import User from "../models/User";
 import { AppError } from "../../utils/errors";
+import { extractPublicId } from "../../utils/cloudinary";
 
 /**
  * Registers a new user.
@@ -153,6 +154,14 @@ export const updateUserProfile = async (
     }
 
     if (req.file) {
+      // Delete old CV if it exists
+      if (user.cvUrl) {
+        const publicId = extractPublicId(user.cvUrl, "user_cvs");
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+        }
+      }
+
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "user_cvs",
         resource_type: "raw",
@@ -184,6 +193,13 @@ export const deleteUserAccount = async (
     const user = await User.findByIdAndDelete(req.userId);
     if (!user) {
       throw new AppError("User not found.", 404);
+    }
+
+    if (user.cvUrl) {
+      const publicId = extractPublicId(user.cvUrl, "user_cvs");
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+      }
     }
 
     res.status(200).json({ message: "User account deleted successfully." });
