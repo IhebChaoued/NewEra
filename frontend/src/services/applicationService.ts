@@ -1,62 +1,67 @@
 import axios from "axios";
 import { IApplication } from "../types/application";
 
+const API_URL = "http://localhost:5000/api/applications";
+
 /**
- * Fetch all applications belonging to the company.
+ * Fetches all applications for the logged-in company.
  */
-export async function getCompanyApplications() {
+export const getApplicationsForCompany = async (token: string) => {
   const res = await axios.get<{ applications: IApplication[] }>(
-    "http://localhost:5000/api/applications/company",
+    `${API_URL}/company`,
     {
-      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
+
   return res.data.applications;
-}
+};
 
 /**
- * Update the status of an application.
+ * Updates the status of an application (e.g. move between stages).
  */
-export async function updateApplicationStatus(
-  applicationId: string,
-  newStatus: "pending" | "in_progress" | "qualified" | "not_qualified"
-) {
-  await axios.patch(
-    `http://localhost:5000/api/applications/${applicationId}`,
-    { status: newStatus },
+export const updateApplicationStatus = async (
+  appId: string,
+  status: "pending" | "in_progress" | "qualified" | "not_qualified",
+  token: string
+) => {
+  const res = await axios.patch<{ application: IApplication }>(
+    `${API_URL}/${appId}`,
+    { status },
     {
-      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
-}
+
+  return res.data.application;
+};
 
 /**
- * Add a new interview step to an application.
+ * Creates or updates a step result for an application.
  */
-export async function createStep(applicationId: string, stepName: string) {
-  await axios.post(
-    `http://localhost:5000/api/applications/${applicationId}/steps`,
-    { stepName },
+export const createOrUpdateStepResult = async (
+  appId: string,
+  stepData: {
+    stepId?: string;
+    name: string;
+    result: "GO" | "NO_GO" | "STILL" | "";
+    notes?: string;
+  },
+  token: string
+) => {
+  const res = await axios.patch<{ application: IApplication }>(
+    `${API_URL}/${appId}/steps`,
+    stepData,
     {
-      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
-}
 
-/**
- * Update an existing interview step.
- */
-export async function updateStep(
-  applicationId: string,
-  stepId: string,
-  result: "GO" | "NO_GO" | "STILL",
-  notes?: string
-) {
-  await axios.patch(
-    `http://localhost:5000/api/applications/${applicationId}/steps/${stepId}`,
-    { result, notes },
-    {
-      withCredentials: true,
-    }
-  );
-}
+  return res.data.application;
+};
