@@ -1,14 +1,16 @@
+import { useCompanyAuthStore } from "../../store/companyAuthStore";
+
 type TopbarProps = {
   title: string;
   onMenuClick?: () => void;
 };
 
 export default function Topbar({ title, onMenuClick }: TopbarProps) {
+  const company = useCompanyAuthStore((state) => state.company);
+
   return (
     <header className="flex items-center justify-between p-4 border-b bg-white shadow-sm">
-      {/* Left: Hamburger + Title */}
       <div className="flex items-center gap-4 min-w-0">
-        {/* Hamburger menu for mobile only */}
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 rounded hover:bg-gray-100"
@@ -27,18 +29,16 @@ export default function Topbar({ title, onMenuClick }: TopbarProps) {
             />
           </svg>
         </button>
-
-        {/* Title (truncates if too long) */}
         <h2 className="text-xl font-bold text-gray-800 truncate">{title}</h2>
       </div>
 
-      {/* Right: Icons + Name + Avatar */}
       <div className="flex items-center gap-4 shrink-0">
         <span className="text-lg cursor-pointer">🔔</span>
         <span className="text-lg cursor-pointer">❤️</span>
 
-        {/* Moved name BEFORE avatar */}
-        <span className="hidden lg:inline font-medium">Nom Prenom</span>
+        <span className="hidden lg:inline font-medium">
+          {company ? company.name : "Guest"}
+        </span>
         <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
       </div>
     </header>

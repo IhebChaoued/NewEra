@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { CompanyLoginData, CompanyRegisterData } from "../types/companyAuth";
 import { companyAuthService } from "../services/companyAuthService";
 
-// Represents a logged-in company
+// Type representing the logged-in company
 export interface Company {
   id: string;
   name: string;
@@ -11,7 +11,7 @@ export interface Company {
   createdAt?: string;
 }
 
-// State shape for auth store
+// Auth state for the store
 export interface CompanyAuthState {
   isLoading: boolean;
   error: string | null;
@@ -30,7 +30,7 @@ export const useCompanyAuthStore = create<CompanyAuthState>((set) => ({
   company: null,
   token: null,
 
-  // Registers a company and saves token + company info
+  // Register company and save to localStorage
   async register(data) {
     try {
       set({ isLoading: true, error: null });
@@ -55,7 +55,7 @@ export const useCompanyAuthStore = create<CompanyAuthState>((set) => ({
     }
   },
 
-  // Logs in a company and saves token + company info
+  // Login company and save to localStorage
   async login(data) {
     try {
       set({ isLoading: true, error: null });
@@ -80,7 +80,7 @@ export const useCompanyAuthStore = create<CompanyAuthState>((set) => ({
     }
   },
 
-  // Logs out and clears storage
+  // Logs out and clears localStorage
   logout() {
     localStorage.removeItem("companyToken");
     localStorage.removeItem("companyInfo");
@@ -90,7 +90,7 @@ export const useCompanyAuthStore = create<CompanyAuthState>((set) => ({
     });
   },
 
-  // Loads auth info from localStorage on app startup
+  // Loads auth info from localStorage
   loadStoredAuth() {
     const token = localStorage.getItem("companyToken");
     const companyInfo = localStorage.getItem("companyInfo");
