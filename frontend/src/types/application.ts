@@ -1,4 +1,22 @@
 /**
+ * User info on an application.
+ */
+export interface IUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+/**
+ * Job info on an application.
+ */
+export interface IJob {
+  _id: string;
+  title: string;
+}
+
+/**
  * A single interview step in an application pipeline.
  */
 export interface IApplicationStep {
@@ -13,8 +31,8 @@ export interface IApplicationStep {
  */
 export interface IApplication {
   _id: string;
-  userId: string;
-  jobId: string;
+  userId: IUser; // ✅ was string, now object
+  jobId: IJob; // ✅ was string, now object
   message: string;
   status: "pending" | "in_progress" | "qualified" | "not_qualified";
   cvUrl?: string;

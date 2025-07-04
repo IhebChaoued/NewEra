@@ -17,9 +17,7 @@ export function useCompanyCRM() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Load all applications for the company.
-   */
+  // Fetch applications for the company
   const fetchApplications = useCallback(async () => {
     try {
       if (!token) return;
@@ -35,9 +33,7 @@ export function useCompanyCRM() {
     }
   }, [token]);
 
-  /**
-   * Change the pipeline status of an application.
-   */
+  // Change application status
   async function changeStatus(
     applicationId: string,
     newStatus: IApplication["status"]
@@ -47,20 +43,36 @@ export function useCompanyCRM() {
     await fetchApplications();
   }
 
-  /**
-   * Create or update a step result on an application.
-   */
+  // Create a new step in an application
+  async function addStep(applicationId: string, stepTitle: string) {
+    if (!token) return;
+    await createOrUpdateStepResult(
+      applicationId,
+      {
+        name: stepTitle,
+        result: "",
+      },
+      token
+    );
+    await fetchApplications();
+  }
+
+  // Save/update a step result
   async function saveStepResult(
     applicationId: string,
     stepId: string | undefined,
-    name: string,
     result: "GO" | "NO_GO" | "STILL" | "",
     notes?: string
   ) {
     if (!token) return;
     await createOrUpdateStepResult(
       applicationId,
-      { stepId, name, result, notes },
+      {
+        stepId,
+        name: "", // empty since we only update result
+        result,
+        notes,
+      },
       token
     );
     await fetchApplications();
@@ -75,6 +87,7 @@ export function useCompanyCRM() {
     loading,
     error,
     changeStatus,
+    addStep,
     saveStepResult,
     refetch: fetchApplications,
   };
