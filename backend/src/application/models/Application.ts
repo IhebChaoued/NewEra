@@ -1,14 +1,24 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
+
+/**
+ * Represents a step in the application pipeline.
+ */
+export interface IApplicationStep extends Types.Subdocument {
+  name: string;
+  result: "GO" | "NO_GO" | "STILL" | "";
+  comment?: string;
+}
 
 /**
  * Represents an application submitted by a user for a job.
  */
 export interface IApplication extends Document {
-  userId: mongoose.Types.ObjectId;
-  jobId: mongoose.Types.ObjectId;
+  userId: Types.ObjectId;
+  jobId: Types.ObjectId;
   message: string;
   status: "pending" | "in_progress" | "qualified" | "not_qualified";
   cvUrl?: string;
+  steps: Types.DocumentArray<IApplicationStep>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -23,7 +33,18 @@ const ApplicationSchema = new Schema<IApplication>(
       enum: ["pending", "in_progress", "qualified", "not_qualified"],
       default: "pending",
     },
-    cvUrl: { type: String, default: "" }, // NEW: store the CV link
+    cvUrl: { type: String, default: "" },
+    steps: [
+      {
+        name: { type: String, required: true },
+        result: {
+          type: String,
+          enum: ["GO", "NO_GO", "STILL", ""],
+          default: "",
+        },
+        comment: { type: String, default: "" },
+      },
+    ],
   },
   { timestamps: true }
 );

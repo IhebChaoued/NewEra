@@ -161,6 +161,77 @@ export const updateApplicationStatus = async (
 };
 
 /**
+ * Adds a new step to the application.
+ */
+export const createStepResult = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { name } = req.body;
+
+    const application = await Application.findById(req.params.id);
+
+    if (!application) {
+      throw new AppError("Application not found.", 404);
+    }
+
+    application.steps.push({
+      name,
+      result: "",
+      comment: "",
+    });
+
+    await application.save();
+
+    res.status(201).json({
+      message: "Step created successfully.",
+      application,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Updates the result of a specific step.
+ */
+export const updateStepResult = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { result, comment } = req.body;
+
+    const application = await Application.findById(req.params.id);
+
+    if (!application) {
+      throw new AppError("Application not found.", 404);
+    }
+
+    const step = application.steps.id(req.params.stepId);
+
+    if (!step) {
+      throw new AppError("Step not found.", 404);
+    }
+
+    step.result = result;
+    step.comment = comment || "";
+
+    await application.save();
+
+    res.status(200).json({
+      message: "Step result updated successfully.",
+      application,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Deletes an application and its custom CV if exists.
  */
 export const deleteApplication = async (

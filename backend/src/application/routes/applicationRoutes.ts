@@ -6,6 +6,8 @@ import {
   getApplicationsForUser,
   updateApplicationStatus,
   deleteApplication,
+  createStepResult,
+  updateStepResult,
 } from "../controllers/applicationController";
 import upload from "../../middlewares/uploadMiddleware";
 
@@ -45,5 +47,19 @@ router.patch("/:id", verifyToken, updateApplicationStatus);
  * @access  Private
  */
 router.delete("/:id", verifyToken, deleteApplication);
+
+/**
+ * @route   POST /api/applications/:id/steps
+ * @desc    Company adds an interview step result
+ * @access  Private
+ */
+router.post("/:id/steps", verifyToken, createStepResult);
+
+/**
+ * @route   PATCH /api/applications/:id/steps/:stepId
+ * @desc    Company updates an interview step result
+ * @access  Private
+ */
+router.patch("/:id/steps/:stepId", verifyToken, updateStepResult);
 
 export default router;
