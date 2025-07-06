@@ -25,6 +25,32 @@ export default function CRM() {
     saveStepResult,
   } = useCompanyCRM();
 
+  // Confirmation modal state
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    appId: string;
+    newStatus: IApplication["status"];
+  } | null>(null);
+
+  function handleChangeStage(appId: string, newStatus: IApplication["status"]) {
+    // save data and show modal
+    setConfirmTarget({ appId, newStatus });
+    setShowConfirm(true);
+  }
+
+  function handleConfirm() {
+    if (confirmTarget) {
+      changeStatus(confirmTarget.appId, confirmTarget.newStatus);
+    }
+    setShowConfirm(false);
+    setConfirmTarget(null);
+  }
+
+  function handleCancel() {
+    setShowConfirm(false);
+    setConfirmTarget(null);
+  }
+
   function addColumn() {
     const name = prompt("Nom de la nouvelle étape ?");
     if (name) {
@@ -217,7 +243,7 @@ export default function CRM() {
                               <button
                                 className="text-blue-600 underline text-xs"
                                 onClick={() =>
-                                  changeStatus(
+                                  handleChangeStage(
                                     app._id,
                                     status === "pending"
                                       ? "in_progress"
@@ -268,6 +294,32 @@ export default function CRM() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Confirmation</h2>
+            <p className="mb-6">
+              Êtes-vous sûr de vouloir passer à l’étape suivante ?
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
