@@ -8,6 +8,12 @@ export default function Jobboard() {
   const [jobs, setJobs] = useState<IJob[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [contractFilter, setContractFilter] = useState("");
+  const [editJobId, setEditJobId] = useState<string | null>(null);
+
+  const { token } = useCompanyAuthStore();
 
   // Form fields for new job
   const [newJob, setNewJob] = useState<Partial<IJob>>({
@@ -20,9 +26,6 @@ export default function Jobboard() {
     blurry: true,
   });
 
-  const { token } = useCompanyAuthStore();
-
-  // Fetch jobs on mount
   useEffect(() => {
     fetchJobs();
   }, []);
@@ -59,32 +62,109 @@ export default function Jobboard() {
     }));
   };
 
-  const handleCreateJob = async (e: React.FormEvent) => {
+  const handleCreateOrUpdateJob = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:5000/api/jobs", newJob, {
+      if (editJobId) {
+        // Edit
+        await axios.patch(
+          `http://localhost:5000/api/jobs/${editJobId}`,
+          newJob,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        alert("Job updated!");
+      } else {
+        // Create
+        await axios.post("http://localhost:5000/api/jobs", newJob, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        alert("Job created!");
+      }
+      setShowModal(false);
+      setEditJobId(null);
+      resetForm();
+      fetchJobs();
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de l'opération.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette offre ?")) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/jobs/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      alert("Job created!");
-      setShowModal(false);
-      setNewJob({
-        title: "",
-        description: "",
-        requirements: "",
-        location: "",
-        salaryRange: "",
-        howToApply: "",
-        blurry: true,
-      });
+      alert("Job deleted.");
       fetchJobs();
-    } catch (error) {
-      console.error(error);
-      alert("Erreur lors de la création de l'offre.");
+    } catch (error: unknown) {
+      const err = error as {
+        isAxiosError?: boolean;
+        message?: string;
+        response?: { data?: { message?: string } };
+      };
+
+      if (err?.isAxiosError) {
+        console.error("Delete error:", err.response?.data || err.message);
+        alert(err.response?.data?.message || "Erreur lors de la suppression.");
+      } else if (err?.message) {
+        console.error("Delete error:", err.message);
+        alert(err.message);
+      } else {
+        console.error("Unknown delete error", error);
+        alert("Une erreur inconnue est survenue.");
+      }
     }
   };
+
+  const handleEdit = (job: IJob) => {
+    setNewJob({
+      title: job.title,
+      description: job.description,
+      requirements: job.requirements,
+      location: job.location,
+      salaryRange: job.salaryRange,
+      howToApply: job.howToApply,
+      blurry: job.blurry,
+    });
+    setEditJobId(job._id);
+    setShowModal(true);
+  };
+
+  const resetForm = () => {
+    setNewJob({
+      title: "",
+      description: "",
+      requirements: "",
+      location: "",
+      salaryRange: "",
+      howToApply: "",
+      blurry: true,
+    });
+  };
+
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch = job.title
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesLocation = !locationFilter || job.location === locationFilter;
+    const matchesContract =
+      !contractFilter ||
+      job.requirements?.toLowerCase().includes(contractFilter.toLowerCase());
+
+    return matchesSearch && matchesLocation && matchesContract;
+  });
 
   return (
     <Layout>
@@ -92,7 +172,11 @@ export default function Jobboard() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => {
+              resetForm();
+              setEditJobId(null);
+              setShowModal(true);
+            }}
             className="bg-[#66f2bc] hover:bg-green-400 text-white px-4 py-2 rounded-xl shadow-sm font-semibold transition"
           >
             + Ajouter une offre
@@ -104,19 +188,29 @@ export default function Jobboard() {
           <input
             type="text"
             placeholder="Rechercher un poste..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="flex-1 min-w-[200px] border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
           />
-          <select className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]">
-            <option>Type de contrat</option>
-            <option>CDI</option>
-            <option>CDD</option>
-            <option>Stage</option>
+          <select
+            value={contractFilter}
+            onChange={(e) => setContractFilter(e.target.value)}
+            className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
+          >
+            <option value="">Type de contrat</option>
+            <option value="CDI">CDI</option>
+            <option value="CDD">CDD</option>
+            <option value="Stage">Stage</option>
           </select>
-          <select className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]">
-            <option>Localisation</option>
-            <option>Tunis</option>
-            <option>Sousse</option>
-            <option>Remote</option>
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
+          >
+            <option value="">Localisation</option>
+            <option value="Tunis">Tunis</option>
+            <option value="Sousse">Sousse</option>
+            <option value="Remote">Remote</option>
           </select>
         </div>
 
@@ -124,21 +218,39 @@ export default function Jobboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             <p>Chargement...</p>
+          ) : filteredJobs.length === 0 ? (
+            <p className="text-gray-500 col-span-full text-center mt-10">
+              Aucune offre disponible.
+            </p>
           ) : (
-            jobs.map((job) => (
+            filteredJobs.map((job) => (
               <div
                 key={job._id}
-                className="bg-white p-4 rounded-xl shadow hover:shadow-md transition border border-gray-100"
+                className="relative bg-white p-4 rounded-xl shadow hover:shadow-md transition border border-gray-100"
               >
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   {job.title}
                 </h3>
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 mb-2">
                   {job.location} | {job.salaryRange || "Salaire à définir"}
                 </p>
-                <p className="text-sm text-gray-700 line-clamp-3">
+                <p className="text-sm text-gray-700 line-clamp-3 mb-3">
                   {job.description}
                 </p>
+                <div className="flex gap-2">
+                  <button
+                    className="text-blue-600 text-xs hover:underline"
+                    onClick={() => handleEdit(job)}
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    className="text-red-600 text-xs hover:underline"
+                    onClick={() => handleDelete(job._id)}
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -149,8 +261,10 @@ export default function Jobboard() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">Créer une nouvelle offre</h2>
-            <form onSubmit={handleCreateJob} className="space-y-4">
+            <h2 className="text-xl font-bold mb-4">
+              {editJobId ? "Modifier l'offre" : "Créer une nouvelle offre"}
+            </h2>
+            <form onSubmit={handleCreateOrUpdateJob} className="space-y-4">
               <input
                 type="text"
                 name="title"
@@ -212,7 +326,11 @@ export default function Jobboard() {
               <div className="flex justify-end gap-4">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    resetForm();
+                    setEditJobId(null);
+                  }}
                   className="px-4 py-2 text-gray-600 hover:underline"
                 >
                   Annuler
@@ -221,7 +339,7 @@ export default function Jobboard() {
                   type="submit"
                   className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 >
-                  Créer l&apos;offre
+                  {editJobId ? "Enregistrer" : "Créer l'offre"}
                 </button>
               </div>
             </form>
