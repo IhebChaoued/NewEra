@@ -18,7 +18,7 @@ export const customFieldService = {
    * Create a new custom field definition.
    */
   async create(field: Partial<ICustomField>, token: string) {
-    const res = await axios.post(API_URL, field, {
+    const res = await axios.post<ICustomField>(API_URL, field, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;

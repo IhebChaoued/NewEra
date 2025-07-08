@@ -49,7 +49,6 @@ export interface IApplication {
 export interface ICustomField {
   _id: string;
   name: string;
-  type: string;
-  required: boolean;
-  defaultValue?: string | number | boolean | null;
+  fieldType: "text" | "number" | "date" | "select";
+  options?: string[];
 }
