@@ -1,7 +1,7 @@
 import axios from "axios";
 import { UserRegisterData, UserLoginData, User } from "../types/userAuth";
 
-const API_URL = "http://localhost:5000/api/users";
+const API_URL = "http://localhost:5000/api/user";
 
 export const userAuthService = {
   async register(
