@@ -12,6 +12,7 @@ import {
   deleteApplication,
   createStepResult,
   updateStepResult,
+  updateCustomFields,
 } from "../controllers/applicationController";
 import upload from "../../middlewares/uploadMiddleware";
 
@@ -65,5 +66,12 @@ router.post("/:id/steps", verifyToken, isCompany, createStepResult);
  * @access  Private (Company only)
  */
 router.patch("/:id/steps/:stepId", verifyToken, isCompany, updateStepResult);
+
+/**
+ * @route   PATCH /api/applications/:id/custom-fields
+ * @desc    Company updates custom fields on an application
+ * @access  Private (Company only)
+ */
+router.patch("/:id/custom-fields", verifyToken, isCompany, updateCustomFields);
 
 export default router;

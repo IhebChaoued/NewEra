@@ -6,6 +6,7 @@ import User from "../../user/models/User";
 import Job from "../../company/models/Job";
 import { AppError } from "../../utils/errors";
 import { extractPublicId } from "../../utils/cloudinary";
+import { AuthRequest } from "../../middlewares/authMiddleware";
 
 /**
  * User applies to a job.
@@ -254,6 +255,36 @@ export const deleteApplication = async (
     }
 
     res.status(200).json({ message: "Application deleted." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Updates custom field values on an application.
+ */
+export const updateCustomFields = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const applicationId = req.params.id;
+    const { customFields } = req.body;
+
+    const app = await Application.findById(applicationId);
+    if (!app) {
+      res.status(404).json({ message: "Application not found." });
+      return;
+    }
+
+    for (const [fieldId, value] of Object.entries(customFields)) {
+      app.customFields.set(fieldId, value);
+    }
+
+    await app.save();
+
+    res.status(200).json(app);
   } catch (error) {
     next(error);
   }

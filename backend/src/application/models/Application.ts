@@ -19,6 +19,7 @@ export interface IApplication extends Document {
   status: "pending" | "in_progress" | "qualified" | "not_qualified";
   cvUrl?: string;
   steps: Types.DocumentArray<IApplicationStep>;
+  customFields: Map<string, any>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -45,6 +46,11 @@ const ApplicationSchema = new Schema<IApplication>(
         comment: { type: String, default: "" },
       },
     ],
+    customFields: {
+      type: Map,
+      of: Schema.Types.Mixed,
+      default: {},
+    },
   },
   { timestamps: true }
 );
