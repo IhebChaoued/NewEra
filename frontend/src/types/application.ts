@@ -32,12 +32,24 @@ export interface IApplicationStep {
  */
 export interface IApplication {
   _id: string;
-  userId: IUser; // ✅ was string, now object
-  jobId: IJob; // ✅ was string, now object
+  userId: IUser;
+  jobId: IJob;
   message: string;
   status: "pending" | "in_progress" | "qualified" | "not_qualified";
   cvUrl?: string;
   steps: IApplicationStep[];
+  customFields: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;
+}
+
+/**
+ * Custom field definition for a company.
+ */
+export interface ICustomField {
+  _id: string;
+  name: string;
+  type: string;
+  required: boolean;
+  defaultValue?: string | number | boolean | null;
 }
