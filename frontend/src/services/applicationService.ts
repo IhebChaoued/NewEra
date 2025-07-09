@@ -41,21 +41,39 @@ export const updateApplicationStatus = async (
 };
 
 /**
- * Creates or updates a step result for an application.
+ * Creates a new step for an application.
  */
-export const createOrUpdateStepResult = async (
+export const createStepResult = async (
   appId: string,
-  stepData: {
-    stepId?: string;
-    name: string;
-    result: "GO" | "NO_GO" | "STILL" | "";
-    notes?: string;
-  },
+  stepName: string,
+  token: string
+) => {
+  const res = await axios.post<{ application: IApplication }>(
+    `${API_URL}/${appId}/steps`,
+    { name: stepName },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return res.data.application;
+};
+
+/**
+ * Updates an existing step result for an application.
+ */
+export const updateStepResult = async (
+  appId: string,
+  stepId: string,
+  result: "GO" | "NO_GO" | "STILL" | "",
+  comment: string,
   token: string
 ) => {
   const res = await axios.patch<{ application: IApplication }>(
-    `${API_URL}/${appId}/steps`,
-    stepData,
+    `${API_URL}/${appId}/steps/${stepId}`,
+    { result, comment },
     {
       headers: {
         Authorization: `Bearer ${token}`,

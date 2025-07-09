@@ -1,19 +1,32 @@
+"use client";
+
 import Layout from "@/components/company/Layout";
 import { useState } from "react";
-import { Home, MoreVertical, ChevronRight, CheckCircle } from "lucide-react";
+import {
+  Home,
+  MoreVertical,
+  ChevronRight,
+  CheckCircle,
+  Plus,
+} from "lucide-react";
 import { useCompanyCRM } from "../../lib/useCompanyCRM";
-import { IApplication } from "../../types/application";
 
 export default function CRM() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [openRecruitment, setOpenRecruitment] = useState(true);
 
-  // New: track which step is in edit mode
-  const [editingStep, setEditingStep] = useState<{
+  const [editingStepName, setEditingStepName] = useState<{
+    appId: string;
+    columnIndex: number;
+  } | null>(null);
+
+  const [editingStepResult, setEditingStepResult] = useState<{
     appId: string;
     stepId: string;
   } | null>(null);
+
+  const [newStepNames, setNewStepNames] = useState<Record<string, string>>({});
 
   const {
     applications,
@@ -24,8 +37,10 @@ export default function CRM() {
     saveStepResult,
   } = useCompanyCRM();
 
-  // Group applications by status
-  const stages: Record<IApplication["status"], IApplication[]> = {
+  const stages: Record<
+    "pending" | "in_progress" | "qualified" | "not_qualified",
+    typeof applications
+  > = {
     pending: [],
     in_progress: [],
     qualified: [],
@@ -36,25 +51,18 @@ export default function CRM() {
     stages[app.status].push(app);
   }
 
-  // French labels for step results
+  // Determine max number of steps for table columns
+  const maxSteps = Math.max(
+    0,
+    ...applications.map((a) => a.steps?.length || 0)
+  );
+
   const stepResultLabels: Record<string, string> = {
     GO: "Validé",
     NO_GO: "Non retenu",
     STILL: "En attente",
     "": "Non défini",
   };
-
-  // New candidate modal state
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newCandidate, setNewCandidate] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    jobTitle: "",
-    message: "",
-    cvFile: null as File | null,
-  });
 
   return (
     <Layout>
@@ -149,7 +157,11 @@ export default function CRM() {
                         <th className="p-2 text-left">Téléphone</th>
                         <th className="p-2 text-left">Poste</th>
                         <th className="p-2 text-left">CV</th>
-                        <th className="p-2 text-left">Étapes</th>
+                        {Array.from({ length: maxSteps }).map((_, i) => (
+                          <th key={i} className="p-2 text-left">
+                            Étape {i + 1}
+                          </th>
+                        ))}
                         <th className="p-2 text-left">Actions</th>
                       </tr>
                     </thead>
@@ -157,7 +169,7 @@ export default function CRM() {
                       {apps.length === 0 && (
                         <tr>
                           <td
-                            colSpan={7}
+                            colSpan={6 + maxSteps}
                             className="p-3 text-gray-500 text-center"
                           >
                             Aucun candidat.
@@ -187,79 +199,126 @@ export default function CRM() {
                               "-"
                             )}
                           </td>
-                          <td className="p-2">
-                            {app.steps?.length > 0 ? (
-                              <div className="flex flex-col space-y-1">
-                                {app.steps.map((step) => (
-                                  <div
-                                    key={step._id}
-                                    className={`px-2 py-1 rounded text-xs font-semibold cursor-pointer ${
-                                      step.result === "GO"
-                                        ? "bg-green-100 text-green-800"
-                                        : step.result === "NO_GO"
-                                        ? "bg-red-100 text-red-800"
-                                        : step.result === "STILL"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : "bg-gray-100 text-gray-800"
-                                    }`}
-                                    onClick={() =>
-                                      setEditingStep({
-                                        appId: app._id,
-                                        stepId: step._id || "",
-                                      })
-                                    }
-                                  >
-                                    {editingStep?.appId === app._id &&
-                                    editingStep?.stepId === step._id ? (
-                                      <select
-                                        value={step.result || ""}
-                                        onChange={(e) => {
-                                          saveStepResult(
-                                            app._id,
-                                            step._id || "",
-                                            e.target.value as
-                                              | "GO"
-                                              | "NO_GO"
-                                              | "STILL"
-                                              | ""
-                                          );
-                                          setEditingStep(null);
-                                        }}
-                                        className="text-xs border rounded px-1 py-0.5"
-                                      >
-                                        <option value="">Non défini</option>
-                                        <option value="GO">Validé</option>
-                                        <option value="NO_GO">
-                                          Non retenu
-                                        </option>
-                                        <option value="STILL">
-                                          En attente
-                                        </option>
-                                      </select>
-                                    ) : (
-                                      <>
-                                        {step.name} →{" "}
-                                        {stepResultLabels[step.result || ""]}
-                                      </>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-gray-500">-</span>
-                            )}
-                          </td>
+
+                          {Array.from({ length: maxSteps }).map(
+                            (_, stepIndex) => {
+                              const step = app.steps?.[stepIndex];
+                              if (!step) {
+                                return (
+                                  <td key={stepIndex} className="p-2">
+                                    <button
+                                      className="flex items-center gap-1 text-green-600 text-xs hover:underline"
+                                      onClick={() => {
+                                        const key = `${app._id}_${stepIndex}`;
+                                        setNewStepNames({
+                                          ...newStepNames,
+                                          [key]: "",
+                                        });
+                                        setEditingStepName({
+                                          appId: app._id,
+                                          columnIndex: stepIndex,
+                                        });
+                                      }}
+                                    >
+                                      <Plus size={12} />
+                                      Ajouter étape
+                                    </button>
+                                  </td>
+                                );
+                              }
+
+                              return (
+                                <td key={step._id} className="p-2">
+                                  {editingStepName?.appId === app._id &&
+                                  editingStepName?.columnIndex === stepIndex ? (
+                                    <input
+                                      type="text"
+                                      value={
+                                        newStepNames[
+                                          `${app._id}_${stepIndex}`
+                                        ] || ""
+                                      }
+                                      onChange={(e) =>
+                                        setNewStepNames({
+                                          ...newStepNames,
+                                          [`${app._id}_${stepIndex}`]:
+                                            e.target.value,
+                                        })
+                                      }
+                                      onBlur={async () => {
+                                        const name =
+                                          newStepNames[
+                                            `${app._id}_${stepIndex}`
+                                          ];
+                                        if (name?.trim()) {
+                                          await addStep(app._id, name);
+                                        }
+                                        setEditingStepName(null);
+                                      }}
+                                      className="border text-xs px-2 py-1 rounded w-full"
+                                      autoFocus
+                                    />
+                                  ) : editingStepResult?.appId === app._id &&
+                                    editingStepResult?.stepId === step._id ? (
+                                    <select
+                                      value={step.result || ""}
+                                      onChange={async (e) => {
+                                        await saveStepResult(
+                                          app._id,
+                                          step._id || "",
+                                          e.target.value as
+                                            | "GO"
+                                            | "NO_GO"
+                                            | "STILL"
+                                            | ""
+                                        );
+                                        setEditingStepResult(null);
+                                      }}
+                                      className="text-xs border rounded px-1 py-0.5 w-full"
+                                    >
+                                      <option value="">Non défini</option>
+                                      <option value="GO">Validé</option>
+                                      <option value="NO_GO">Non retenu</option>
+                                      <option value="STILL">En attente</option>
+                                    </select>
+                                  ) : (
+                                    <div
+                                      className={`cursor-pointer px-2 py-1 text-xs rounded ${
+                                        step.result === "GO"
+                                          ? "bg-green-100 text-green-800"
+                                          : step.result === "NO_GO"
+                                          ? "bg-red-100 text-red-800"
+                                          : step.result === "STILL"
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : "bg-gray-100 text-gray-800"
+                                      }`}
+                                      onClick={() =>
+                                        setEditingStepResult({
+                                          appId: app._id,
+                                          stepId: step._id || "",
+                                        })
+                                      }
+                                    >
+                                      {step.name} →{" "}
+                                      {stepResultLabels[step.result || ""]}
+                                    </div>
+                                  )}
+                                </td>
+                              );
+                            }
+                          )}
+
                           <td className="p-2 space-x-2">
                             <button
                               className="text-blue-600 underline text-xs"
                               onClick={() =>
                                 changeStatus(
                                   app._id,
-                                  status === "pending"
+                                  app.status === "pending"
                                     ? "in_progress"
-                                    : status === "in_progress"
+                                    : app.status === "in_progress"
                                     ? "qualified"
-                                    : status === "qualified"
+                                    : app.status === "qualified"
                                     ? "not_qualified"
                                     : "pending"
                                 )
@@ -267,41 +326,9 @@ export default function CRM() {
                             >
                               Changer étape
                             </button>
-                            <button
-                              className="text-green-600 underline text-xs"
-                              onClick={() =>
-                                addStep(app._id, "Entretien Téléphonique")
-                              }
-                            >
-                              Ajouter étape
-                            </button>
-                            <button
-                              className="text-yellow-600 underline text-xs"
-                              onClick={() =>
-                                saveStepResult(
-                                  app._id,
-                                  app.steps?.[0]?._id || "",
-                                  "GO"
-                                )
-                              }
-                            >
-                              MAJ étape
-                            </button>
                           </td>
                         </tr>
                       ))}
-
-                      {status === "pending" && (
-                        <tr>
-                          <td
-                            colSpan={7}
-                            className="p-3 text-center text-green-600 cursor-pointer hover:underline"
-                            onClick={() => setShowAddModal(true)}
-                          >
-                            + Ajouter candidat
-                          </td>
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
@@ -310,118 +337,6 @@ export default function CRM() {
           </div>
         </div>
       </div>
-
-      {/* Add Candidate Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Nouveau candidat</h2>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <input
-                type="text"
-                placeholder="Prénom"
-                value={newCandidate.firstName}
-                onChange={(e) =>
-                  setNewCandidate({
-                    ...newCandidate,
-                    firstName: e.target.value,
-                  })
-                }
-                className="border px-3 py-2 rounded"
-              />
-              <input
-                type="text"
-                placeholder="Nom"
-                value={newCandidate.lastName}
-                onChange={(e) =>
-                  setNewCandidate({
-                    ...newCandidate,
-                    lastName: e.target.value,
-                  })
-                }
-                className="border px-3 py-2 rounded"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={newCandidate.email}
-                onChange={(e) =>
-                  setNewCandidate({
-                    ...newCandidate,
-                    email: e.target.value,
-                  })
-                }
-                className="border px-3 py-2 rounded col-span-2"
-              />
-              <input
-                type="text"
-                placeholder="Téléphone"
-                value={newCandidate.phone}
-                onChange={(e) =>
-                  setNewCandidate({
-                    ...newCandidate,
-                    phone: e.target.value,
-                  })
-                }
-                className="border px-3 py-2 rounded col-span-2"
-              />
-              <input
-                type="text"
-                placeholder="Poste"
-                value={newCandidate.jobTitle}
-                onChange={(e) =>
-                  setNewCandidate({
-                    ...newCandidate,
-                    jobTitle: e.target.value,
-                  })
-                }
-                className="border px-3 py-2 rounded col-span-2"
-              />
-              <textarea
-                placeholder="Message"
-                value={newCandidate.message}
-                onChange={(e) =>
-                  setNewCandidate({
-                    ...newCandidate,
-                    message: e.target.value,
-                  })
-                }
-                className="border px-3 py-2 rounded col-span-2"
-              />
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={(e) =>
-                  setNewCandidate({
-                    ...newCandidate,
-                    cvFile: e.target.files?.[0] || null,
-                  })
-                }
-                className="col-span-2"
-              />
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => {
-                  alert("TODO: save to backend!");
-                  setShowAddModal(false);
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Sauvegarder
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </Layout>
   );
 }

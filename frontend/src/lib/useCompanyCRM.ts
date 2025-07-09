@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import {
   getApplicationsForCompany,
   updateApplicationStatus,
-  createOrUpdateStepResult,
+  createStepResult,
+  updateStepResult,
 } from "../services/applicationService";
 import { IApplication } from "../types/application";
 import { useCompanyAuthStore } from "../store/companyAuthStore";
@@ -17,7 +18,9 @@ export function useCompanyCRM() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch applications for the company
+  /**
+   * Load applications belonging to the logged-in company.
+   */
   const fetchApplications = useCallback(async () => {
     try {
       if (!token) return;
@@ -33,7 +36,9 @@ export function useCompanyCRM() {
     }
   }, [token]);
 
-  // Change application status
+  /**
+   * Change the overall status of an application.
+   */
   async function changeStatus(
     applicationId: string,
     newStatus: IApplication["status"]
@@ -43,38 +48,26 @@ export function useCompanyCRM() {
     await fetchApplications();
   }
 
-  // Create a new step in an application
+  /**
+   * Create a new step in an application's process.
+   */
   async function addStep(applicationId: string, stepTitle: string) {
     if (!token) return;
-    await createOrUpdateStepResult(
-      applicationId,
-      {
-        name: stepTitle,
-        result: "",
-      },
-      token
-    );
+    await createStepResult(applicationId, stepTitle, token);
     await fetchApplications();
   }
 
-  // Save/update a step result
+  /**
+   * Update the result of an existing step in an application.
+   */
   async function saveStepResult(
     applicationId: string,
     stepId: string | undefined,
     result: "GO" | "NO_GO" | "STILL" | "",
     notes?: string
   ) {
-    if (!token) return;
-    await createOrUpdateStepResult(
-      applicationId,
-      {
-        stepId,
-        name: "", // empty since we only update result
-        result,
-        notes,
-      },
-      token
-    );
+    if (!token || !stepId) return;
+    await updateStepResult(applicationId, stepId, result, notes || "", token);
     await fetchApplications();
   }
 
