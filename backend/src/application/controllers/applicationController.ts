@@ -4,6 +4,7 @@ import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 import User from "../../user/models/User";
 import Job from "../../company/models/Job";
+import CustomField from "../../company/models/CustomField"; // ✅ ADDED
 import { AppError } from "../../utils/errors";
 import { extractPublicId } from "../../utils/cloudinary";
 import { AuthRequest } from "../../middlewares/authMiddleware";
@@ -52,10 +53,10 @@ export const createApplication = async (
 };
 
 /**
- * Company fetches all applications for its jobs, paginated.
+ * Company fetches all applications for its jobs, including custom fields.
  */
 export const getApplicationsForCompany = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -64,6 +65,7 @@ export const getApplicationsForCompany = async (
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
+    // ✅ Find all job IDs owned by this company
     const jobs = await Job.find({ companyId: req.userId }).select("_id");
     const jobIds = jobs.map((j) => j._id);
 
@@ -71,6 +73,7 @@ export const getApplicationsForCompany = async (
       jobId: { $in: jobIds },
     });
 
+    // ✅ Fetch applications
     const applications = await Application.find({
       jobId: { $in: jobIds },
     })
@@ -79,6 +82,27 @@ export const getApplicationsForCompany = async (
       .skip(skip)
       .limit(limit);
 
+    // ✅ Fetch custom field definitions for this company
+    const customFields = await CustomField.find({
+      companyId: req.userId,
+    });
+
+    // ✅ Merge custom field definitions with application values
+    const applicationsWithCustomFields = applications.map((app) => {
+      const customFieldsArray = customFields.map((field) => ({
+        _id: field._id,
+        name: field.name,
+        fieldType: field.fieldType,
+        options: field.options,
+        value: app.customFields?.get(String(field._id)) || null,
+      }));
+
+      return {
+        ...app.toObject(),
+        customFields: customFieldsArray,
+      };
+    });
+
     const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
@@ -86,7 +110,8 @@ export const getApplicationsForCompany = async (
       page,
       limit,
       totalPages,
-      applications,
+      applications: applicationsWithCustomFields,
+      customFields, // also send definitions separately if needed
     });
   } catch (error) {
     next(error);
@@ -274,17 +299,20 @@ export const updateCustomFields = async (
 
     const app = await Application.findById(applicationId);
     if (!app) {
-      res.status(404).json({ message: "Application not found." });
-      return;
+      throw new AppError("Application not found.", 404);
     }
 
+    // ✅ Save custom field values to the Map
     for (const [fieldId, value] of Object.entries(customFields)) {
       app.customFields.set(fieldId, value);
     }
 
     await app.save();
 
-    res.status(200).json(app);
+    res.status(200).json({
+      message: "Custom fields updated successfully.",
+      application: app,
+    });
   } catch (error) {
     next(error);
   }
