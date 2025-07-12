@@ -18,7 +18,7 @@ export interface IJob {
 }
 
 /**
- * A single interview step in an application pipeline.
+ * One step in a recruitment pipeline.
  */
 export interface IApplicationStep {
   _id?: string;
@@ -28,7 +28,24 @@ export interface IApplicationStep {
 }
 
 /**
- * Application record submitted by a user to a job.
+ * Defines one custom field for a company.
+ */
+export interface ICustomField {
+  _id: string;
+  name: string;
+  fieldType: "text" | "number" | "date" | "select";
+  options?: string[];
+}
+
+/**
+ * Represents a custom field and its value on an application.
+ */
+export interface ICustomFieldValue extends ICustomField {
+  value: string | number | null;
+}
+
+/**
+ * An application record.
  */
 export interface IApplication {
   _id: string;
@@ -38,17 +55,9 @@ export interface IApplication {
   status: "pending" | "in_progress" | "qualified" | "not_qualified";
   cvUrl?: string;
   steps: IApplicationStep[];
-  customFields: Record<string, unknown>;
+  customFields: ICustomFieldValue[];
   createdAt?: string;
   updatedAt?: string;
 }
 
-/**
- * Custom field definition for a company.
- */
-export interface ICustomField {
-  _id: string;
-  name: string;
-  fieldType: "text" | "number" | "date" | "select";
-  options?: string[];
-}
+export type CustomFieldValue = string | number | null;

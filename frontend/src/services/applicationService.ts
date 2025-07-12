@@ -1,26 +1,31 @@
 import axios from "axios";
-import { IApplication } from "../types/application";
+import {
+  IApplication,
+  ICustomField,
+  CustomFieldValue,
+} from "../types/application";
 
 const API_URL = "http://localhost:5000/api/applications";
 
 /**
- * Fetches all applications for the logged-in company.
+ * Fetches all applications for the logged-in company,
+ * including custom field definitions and values.
  */
 export const getApplicationsForCompany = async (token: string) => {
-  const res = await axios.get<{ applications: IApplication[] }>(
-    `${API_URL}/company`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const res = await axios.get<{
+    applications: IApplication[];
+    customFields: ICustomField[];
+  }>(`${API_URL}/company`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-  return res.data.applications;
+  return res.data;
 };
 
 /**
- * Updates the status of an application (e.g. move between stages).
+ * Updates the status of an application.
  */
 export const updateApplicationStatus = async (
   appId: string,
@@ -74,6 +79,27 @@ export const updateStepResult = async (
   const res = await axios.patch<{ application: IApplication }>(
     `${API_URL}/${appId}/steps/${stepId}`,
     { result, comment },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return res.data.application;
+};
+
+/**
+ * Updates custom field values for an application.
+ */
+export const updateCustomFields = async (
+  appId: string,
+  customFields: Record<string, CustomFieldValue>,
+  token: string
+) => {
+  const res = await axios.patch<{ application: IApplication }>(
+    `${API_URL}/${appId}/custom-fields`,
+    { customFields },
     {
       headers: {
         Authorization: `Bearer ${token}`,

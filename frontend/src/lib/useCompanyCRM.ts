@@ -5,7 +5,7 @@ import {
   createStepResult,
   updateStepResult,
 } from "../services/applicationService";
-import { IApplication } from "../types/application";
+import { IApplication, ICustomField } from "../types/application";
 import { useCompanyAuthStore } from "../store/companyAuthStore";
 
 /**
@@ -15,6 +15,7 @@ export function useCompanyCRM() {
   const token = useCompanyAuthStore((state) => state.token);
 
   const [applications, setApplications] = useState<IApplication[]>([]);
+  const [customFields, setCustomFields] = useState<ICustomField[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,8 +27,13 @@ export function useCompanyCRM() {
       if (!token) return;
       setLoading(true);
       setError(null);
-      const apps = await getApplicationsForCompany(token);
-      setApplications(apps);
+
+      // Fetch BOTH applications + customFields
+      const { applications, customFields } = await getApplicationsForCompany(
+        token
+      );
+      setApplications(applications);
+      setCustomFields(customFields);
     } catch (e) {
       console.error(e);
       setError("Failed to load applications.");
@@ -77,6 +83,7 @@ export function useCompanyCRM() {
 
   return {
     applications,
+    customFields,
     loading,
     error,
     changeStatus,
