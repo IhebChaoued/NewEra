@@ -4,7 +4,7 @@ import cloudinary from "../../config/cloudinary";
 import fs from "fs";
 import User from "../../user/models/User";
 import Job from "../../company/models/Job";
-import CustomField from "../../company/models/CustomField"; // ✅ ADDED
+import CustomField, { ICustomField } from "../../company/models/CustomField";
 import { AppError } from "../../utils/errors";
 import { extractPublicId } from "../../utils/cloudinary";
 import { AuthRequest } from "../../middlewares/authMiddleware";
@@ -53,7 +53,7 @@ export const createApplication = async (
 };
 
 /**
- * Company fetches all applications for its jobs, including custom fields.
+ * Company fetches all applications for its jobs.
  */
 export const getApplicationsForCompany = async (
   req: AuthRequest,
@@ -65,7 +65,6 @@ export const getApplicationsForCompany = async (
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    // ✅ Find all job IDs owned by this company
     const jobs = await Job.find({ companyId: req.userId }).select("_id");
     const jobIds = jobs.map((j) => j._id);
 
@@ -73,8 +72,7 @@ export const getApplicationsForCompany = async (
       jobId: { $in: jobIds },
     });
 
-    // ✅ Fetch applications
-    const applications = await Application.find({
+    const rawApps = await Application.find({
       jobId: { $in: jobIds },
     })
       .populate("jobId")
@@ -82,24 +80,22 @@ export const getApplicationsForCompany = async (
       .skip(skip)
       .limit(limit);
 
-    // ✅ Fetch custom field definitions for this company
-    const customFields = await CustomField.find({
+    const customFields: ICustomField[] = await CustomField.find({
       companyId: req.userId,
     });
 
-    // ✅ Merge custom field definitions with application values
-    const applicationsWithCustomFields = applications.map((app) => {
-      const customFieldsArray = customFields.map((field) => ({
-        _id: field._id,
+    const applications = rawApps.map((app) => {
+      const customFieldArray = customFields.map((field: ICustomField) => ({
+        _id: String(field._id),
         name: field.name,
         fieldType: field.fieldType,
         options: field.options,
-        value: app.customFields?.get(String(field._id)) || null,
+        value: app.customFields?.get(String(field._id)) ?? null,
       }));
 
       return {
         ...app.toObject(),
-        customFields: customFieldsArray,
+        customFields: customFieldArray,
       };
     });
 
@@ -110,8 +106,8 @@ export const getApplicationsForCompany = async (
       page,
       limit,
       totalPages,
-      applications: applicationsWithCustomFields,
-      customFields, // also send definitions separately if needed
+      applications,
+      customFields,
     });
   } catch (error) {
     next(error);
@@ -119,7 +115,7 @@ export const getApplicationsForCompany = async (
 };
 
 /**
- * User fetches all applications they submitted, paginated.
+ * User fetches all applications they submitted.
  */
 export const getApplicationsForUser = async (
   req: Request,
@@ -258,7 +254,7 @@ export const updateStepResult = async (
 };
 
 /**
- * Deletes an application and its custom CV if exists.
+ * Deletes an application and CV.
  */
 export const deleteApplication = async (
   req: Request,
@@ -299,11 +295,14 @@ export const updateCustomFields = async (
 
     const app = await Application.findById(applicationId);
     if (!app) {
-      throw new AppError("Application not found.", 404);
+      res.status(404).json({ message: "Application not found." });
+      return;
     }
 
-    // ✅ Save custom field values to the Map
-    for (const [fieldId, value] of Object.entries(customFields)) {
+    // Type fix: ensure fieldId is a string
+    for (const [fieldId, value] of Object.entries(
+      customFields as Record<string, any>
+    )) {
       app.customFields.set(fieldId, value);
     }
 
