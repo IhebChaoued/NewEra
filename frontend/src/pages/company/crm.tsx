@@ -1,7 +1,7 @@
 "use client";
 
 import Layout from "@/components/company/Layout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Home,
   MoreVertical,
@@ -16,17 +16,16 @@ export default function CRM() {
   const [filter, setFilter] = useState("All");
   const [openRecruitment, setOpenRecruitment] = useState(true);
 
-  const [editingStepName, setEditingStepName] = useState<{
-    appId: string;
-    columnIndex: number;
-  } | null>(null);
-
   const [editingStepResult, setEditingStepResult] = useState<{
     appId: string;
     stepId: string;
   } | null>(null);
 
-  const [newStepNames, setNewStepNames] = useState<Record<string, string>>({});
+  const [addingStepForAppId, setAddingStepForAppId] = useState<string | null>(
+    null
+  );
+
+  const [newStepName, setNewStepName] = useState("");
 
   const {
     applications,
@@ -51,18 +50,27 @@ export default function CRM() {
     stages[app.status].push(app);
   }
 
-  // Determine max number of steps for table columns
-  const maxSteps = Math.max(
-    0,
-    ...applications.map((a) => a.steps?.length || 0)
-  );
-
   const stepResultLabels: Record<string, string> = {
     GO: "Validé",
     NO_GO: "Non retenu",
     STILL: "En attente",
     "": "Non défini",
   };
+
+  /**
+   * Get ALL unique step names across all applications
+   */
+  const allStepNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const app of applications) {
+      for (const step of app.steps || []) {
+        if (step.name?.trim()) {
+          names.add(step.name);
+        }
+      }
+    }
+    return Array.from(names);
+  }, [applications]);
 
   return (
     <Layout>
@@ -157,9 +165,9 @@ export default function CRM() {
                         <th className="p-2 text-left">Téléphone</th>
                         <th className="p-2 text-left">Poste</th>
                         <th className="p-2 text-left">CV</th>
-                        {Array.from({ length: maxSteps }).map((_, i) => (
-                          <th key={i} className="p-2 text-left">
-                            Étape {i + 1}
+                        {allStepNames.map((name) => (
+                          <th key={name} className="p-2 text-left">
+                            {name}
                           </th>
                         ))}
                         <th className="p-2 text-left">Actions</th>
@@ -169,7 +177,7 @@ export default function CRM() {
                       {apps.length === 0 && (
                         <tr>
                           <td
-                            colSpan={6 + maxSteps}
+                            colSpan={6 + allStepNames.length}
                             className="p-3 text-gray-500 text-center"
                           >
                             Aucun candidat.
@@ -200,113 +208,104 @@ export default function CRM() {
                             )}
                           </td>
 
-                          {Array.from({ length: maxSteps }).map(
-                            (_, stepIndex) => {
-                              const step = app.steps?.[stepIndex];
-                              if (!step) {
-                                return (
-                                  <td key={stepIndex} className="p-2">
-                                    <button
-                                      className="flex items-center gap-1 text-green-600 text-xs hover:underline"
-                                      onClick={() => {
-                                        const key = `${app._id}_${stepIndex}`;
-                                        setNewStepNames({
-                                          ...newStepNames,
-                                          [key]: "",
-                                        });
-                                        setEditingStepName({
-                                          appId: app._id,
-                                          columnIndex: stepIndex,
-                                        });
-                                      }}
-                                    >
-                                      <Plus size={12} />
-                                      Ajouter étape
-                                    </button>
-                                  </td>
-                                );
-                              }
-
+                          {allStepNames.map((stepName) => {
+                            const step = app.steps?.find(
+                              (s) => s.name === stepName
+                            );
+                            if (!step) {
                               return (
-                                <td key={step._id} className="p-2">
-                                  {editingStepName?.appId === app._id &&
-                                  editingStepName?.columnIndex === stepIndex ? (
-                                    <input
-                                      type="text"
-                                      value={
-                                        newStepNames[
-                                          `${app._id}_${stepIndex}`
-                                        ] || ""
-                                      }
-                                      onChange={(e) =>
-                                        setNewStepNames({
-                                          ...newStepNames,
-                                          [`${app._id}_${stepIndex}`]:
-                                            e.target.value,
-                                        })
-                                      }
-                                      onBlur={async () => {
-                                        const name =
-                                          newStepNames[
-                                            `${app._id}_${stepIndex}`
-                                          ];
-                                        if (name?.trim()) {
-                                          await addStep(app._id, name);
+                                <td key={stepName} className="p-2">
+                                  {addingStepForAppId === app._id ? (
+                                    <div className="flex gap-1">
+                                      <input
+                                        type="text"
+                                        value={newStepName}
+                                        onChange={(e) =>
+                                          setNewStepName(e.target.value)
                                         }
-                                        setEditingStepName(null);
-                                      }}
-                                      className="border text-xs px-2 py-1 rounded w-full"
-                                      autoFocus
-                                    />
-                                  ) : editingStepResult?.appId === app._id &&
-                                    editingStepResult?.stepId === step._id ? (
-                                    <select
-                                      value={step.result || ""}
-                                      onChange={async (e) => {
-                                        await saveStepResult(
-                                          app._id,
-                                          step._id || "",
-                                          e.target.value as
-                                            | "GO"
-                                            | "NO_GO"
-                                            | "STILL"
-                                            | ""
-                                        );
-                                        setEditingStepResult(null);
-                                      }}
-                                      className="text-xs border rounded px-1 py-0.5 w-full"
-                                    >
-                                      <option value="">Non défini</option>
-                                      <option value="GO">Validé</option>
-                                      <option value="NO_GO">Non retenu</option>
-                                      <option value="STILL">En attente</option>
-                                    </select>
-                                  ) : (
-                                    <div
-                                      className={`cursor-pointer px-2 py-1 text-xs rounded ${
-                                        step.result === "GO"
-                                          ? "bg-green-100 text-green-800"
-                                          : step.result === "NO_GO"
-                                          ? "bg-red-100 text-red-800"
-                                          : step.result === "STILL"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : "bg-gray-100 text-gray-800"
-                                      }`}
-                                      onClick={() =>
-                                        setEditingStepResult({
-                                          appId: app._id,
-                                          stepId: step._id || "",
-                                        })
-                                      }
-                                    >
-                                      {step.name} →{" "}
-                                      {stepResultLabels[step.result || ""]}
+                                        onKeyDown={async (e) => {
+                                          if (e.key === "Enter") {
+                                            if (newStepName.trim()) {
+                                              await addStep(
+                                                app._id,
+                                                newStepName.trim()
+                                              );
+                                              setNewStepName("");
+                                              setAddingStepForAppId(null);
+                                            }
+                                          }
+                                        }}
+                                        onBlur={() =>
+                                          setAddingStepForAppId(null)
+                                        }
+                                        autoFocus
+                                        className="border text-xs px-2 py-1 rounded w-full"
+                                      />
                                     </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setAddingStepForAppId(app._id);
+                                      }}
+                                      className="flex items-center gap-1 text-green-600 text-xs hover:underline"
+                                    >
+                                      <Plus size={12} /> Ajouter étape
+                                    </button>
                                   )}
                                 </td>
                               );
                             }
-                          )}
+
+                            return (
+                              <td key={step._id} className="p-2">
+                                {editingStepResult?.appId === app._id &&
+                                editingStepResult?.stepId === step._id ? (
+                                  <select
+                                    value={step.result || ""}
+                                    onChange={async (e) => {
+                                      await saveStepResult(
+                                        app._id,
+                                        step._id || "",
+                                        e.target.value as
+                                          | "GO"
+                                          | "NO_GO"
+                                          | "STILL"
+                                          | ""
+                                      );
+                                      setEditingStepResult(null);
+                                    }}
+                                    className="text-xs border rounded px-1 py-0.5 w-full"
+                                  >
+                                    <option value="">Non défini</option>
+                                    <option value="GO">Validé</option>
+                                    <option value="NO_GO">Non retenu</option>
+                                    <option value="STILL">En attente</option>
+                                  </select>
+                                ) : (
+                                  <div
+                                    className={`cursor-pointer px-2 py-1 text-xs rounded ${
+                                      step.result === "GO"
+                                        ? "bg-green-100 text-green-800"
+                                        : step.result === "NO_GO"
+                                        ? "bg-red-100 text-red-800"
+                                        : step.result === "STILL"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                    onClick={() =>
+                                      setEditingStepResult({
+                                        appId: app._id,
+                                        stepId: step._id || "",
+                                      })
+                                    }
+                                  >
+                                    {step.name} →{" "}
+                                    {stepResultLabels[step.result || ""]}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
 
                           <td className="p-2 space-x-2">
                             <button
