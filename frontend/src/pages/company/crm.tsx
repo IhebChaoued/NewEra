@@ -1,7 +1,7 @@
 "use client";
 
 import Layout from "@/components/company/Layout";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Home,
   MoreVertical,
@@ -10,10 +10,10 @@ import {
   Plus,
 } from "lucide-react";
 import { useCompanyCRM } from "../../lib/useCompanyCRM";
+import axios from "axios";
 
 export default function CRM() {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
   const [openRecruitment, setOpenRecruitment] = useState(true);
 
   const [editingStepResult, setEditingStepResult] = useState<{
@@ -36,19 +36,97 @@ export default function CRM() {
     saveStepResult,
   } = useCompanyCRM();
 
-  const stages: Record<
-    "pending" | "in_progress" | "qualified" | "not_qualified",
-    typeof applications
-  > = {
-    pending: [],
-    in_progress: [],
-    qualified: [],
-    not_qualified: [],
+  // ✅ Custom fields logic
+  const [showCustomFieldModal, setShowCustomFieldModal] = useState(false);
+  const [customFields, setCustomFields] = useState<
+    { _id: string; name: string; type: string }[]
+  >([]);
+  const [newCustomFieldName, setNewCustomFieldName] = useState("");
+  const [newCustomFieldType, setNewCustomFieldType] = useState("text");
+
+  // Fetch custom fields from backend
+  useEffect(() => {
+    axios
+      .get<{ _id: string; name: string; type: string }[]>("/api/custom-fields")
+      .then((res) => setCustomFields(res.data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const handleAddCustomField = async () => {
+    if (!newCustomFieldName.trim()) {
+      alert("Nom du champ requis.");
+      return;
+    }
+
+    try {
+      const { data } = await axios.post<{
+        _id: string;
+        name: string;
+        type: string;
+      }>("/api/custom-fields", {
+        name: newCustomFieldName.trim(),
+        type: newCustomFieldType,
+      });
+
+      setCustomFields((prev) => [...prev, data]);
+      setShowCustomFieldModal(false);
+      setNewCustomFieldName("");
+      setNewCustomFieldType("text");
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de la création du champ personnalisé.");
+    }
   };
 
-  for (const app of applications) {
-    stages[app.status].push(app);
-  }
+  const filteredApplications = useMemo(() => {
+    if (!search.trim()) return applications;
+
+    return applications.filter((app) => {
+      const searchStr = search.toLowerCase();
+
+      return (
+        app.userId?.firstName?.toLowerCase().includes(searchStr) ||
+        app.userId?.lastName?.toLowerCase().includes(searchStr) ||
+        app.userId?.email?.toLowerCase().includes(searchStr) ||
+        app.jobId?.title?.toLowerCase().includes(searchStr) ||
+        customFields.some((field) => {
+          const fieldValue = app.customFields?.find((f) => f._id === field._id);
+          const val = fieldValue?.value != null ? String(fieldValue.value) : "";
+          return val.toLowerCase().includes(searchStr);
+        })
+      );
+    });
+  }, [search, applications, customFields]);
+
+  const stages = useMemo(() => {
+    const uniqueAppsMap = new Map<string, (typeof applications)[0]>();
+
+    for (const app of filteredApplications) {
+      const userId = app.userId?._id || "";
+      const jobId = app.jobId?._id || "";
+      const key = `${userId}-${jobId}`;
+
+      if (!uniqueAppsMap.has(key)) {
+        uniqueAppsMap.set(key, app);
+      }
+    }
+
+    const result: Record<
+      "pending" | "in_progress" | "qualified" | "not_qualified",
+      typeof applications
+    > = {
+      pending: [],
+      in_progress: [],
+      qualified: [],
+      not_qualified: [],
+    };
+
+    for (const app of uniqueAppsMap.values()) {
+      result[app.status].push(app);
+    }
+
+    return result;
+  }, [filteredApplications]);
 
   const stepResultLabels: Record<string, string> = {
     GO: "Validé",
@@ -57,9 +135,6 @@ export default function CRM() {
     "": "Non défini",
   };
 
-  /**
-   * Get ALL unique step names across all applications
-   */
   const allStepNames = useMemo(() => {
     const names = new Set<string>();
     for (const app of applications) {
@@ -129,14 +204,6 @@ export default function CRM() {
                 placeholder="Rechercher..."
                 className="border border-gray-300 rounded-lg px-4 py-2 w-full max-w-md"
               />
-
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2"
-              >
-                <option value="All">Tous</option>
-              </select>
             </div>
           </div>
 
@@ -146,7 +213,7 @@ export default function CRM() {
           <div className="flex flex-col gap-12">
             {Object.entries(stages).map(([status, apps]) => (
               <div key={status} className="bg-gray-50 rounded-lg border p-4">
-                <h2 className="text-lg font-semibold mb-4">
+                <h2 className="text-lg font-semibold mb-4 text-black">
                   {status === "pending"
                     ? "Nouveaux candidats"
                     : status === "in_progress"
@@ -156,15 +223,28 @@ export default function CRM() {
                     : "Non qualifié"}
                 </h2>
 
+                <button
+                  onClick={() => setShowCustomFieldModal(true)}
+                  className="mb-4 text-sm px-3 py-2 rounded bg-green-700 text-white hover:bg-green-800"
+                >
+                  + Ajouter un champ personnalisé
+                </button>
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-100 text-gray-700">
+                    <thead className="bg-gray-100 text-gray-900 sticky top-0 z-10">
                       <tr>
                         <th className="p-2 text-left">Nom</th>
                         <th className="p-2 text-left">Email</th>
                         <th className="p-2 text-left">Téléphone</th>
                         <th className="p-2 text-left">Poste</th>
+                        <th className="p-2 text-left">Date d’application</th>
                         <th className="p-2 text-left">CV</th>
+                        {customFields.map((field) => (
+                          <th key={field._id} className="p-2 text-left">
+                            {field.name}
+                          </th>
+                        ))}
                         {allStepNames.map((name) => (
                           <th key={name} className="p-2 text-left">
                             {name}
@@ -177,7 +257,9 @@ export default function CRM() {
                       {apps.length === 0 && (
                         <tr>
                           <td
-                            colSpan={6 + allStepNames.length}
+                            colSpan={
+                              7 + customFields.length + allStepNames.length
+                            }
                             className="p-3 text-gray-500 text-center"
                           >
                             Aucun candidat.
@@ -187,12 +269,25 @@ export default function CRM() {
 
                       {apps.map((app) => (
                         <tr key={app._id} className="border-t hover:bg-gray-50">
-                          <td className="p-2">
+                          <td className="p-2 text-black">
                             {app.userId?.firstName} {app.userId?.lastName}
                           </td>
-                          <td className="p-2">{app.userId?.email}</td>
-                          <td className="p-2">{app.userId?.phone || "-"}</td>
-                          <td className="p-2">{app.jobId?.title || "-"}</td>
+                          <td className="p-2 text-black">
+                            {app.userId?.email}
+                          </td>
+                          <td className="p-2 text-black">
+                            {app.userId?.phone || "-"}
+                          </td>
+                          <td className="p-2 text-black">
+                            {app.jobId?.title || "-"}
+                          </td>
+                          <td className="p-2 text-black">
+                            {app.createdAt
+                              ? new Date(app.createdAt).toLocaleDateString(
+                                  "fr-FR"
+                                )
+                              : "-"}
+                          </td>
                           <td className="p-2">
                             {app.cvUrl ? (
                               <a
@@ -207,6 +302,12 @@ export default function CRM() {
                               "-"
                             )}
                           </td>
+
+                          {customFields.map((field) => (
+                            <td key={field._id} className="p-2 text-black">
+                              -
+                            </td>
+                          ))}
 
                           {allStepNames.map((stepName) => {
                             const step = app.steps?.find(
@@ -336,6 +437,56 @@ export default function CRM() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Custom field modal */}
+      {showCustomFieldModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">
+              Nouveau champ personnalisé
+            </h3>
+
+            <div className="mb-4">
+              <label className="text-sm block mb-1">Nom du champ</label>
+              <input
+                type="text"
+                value={newCustomFieldName}
+                onChange={(e) => setNewCustomFieldName(e.target.value)}
+                className="border rounded px-3 py-2 w-full"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="text-sm block mb-1">Type de champ</label>
+              <select
+                value={newCustomFieldType}
+                onChange={(e) => setNewCustomFieldType(e.target.value)}
+                className="border rounded px-3 py-2 w-full"
+              >
+                <option value="text">Texte</option>
+                <option value="number">Nombre</option>
+                <option value="date">Date</option>
+                <option value="select">Liste déroulante</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCustomFieldModal(false)}
+                className="px-4 py-2 rounded border text-gray-700"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleAddCustomField}
+                className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+              >
+                Sauvegarder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
