@@ -33,12 +33,12 @@ export default function Dashboard() {
         {/* Main content */}
         <div className="flex-1 pr-0 lg:pr-80">
           {/* Upgrade box */}
-          <div className="bg-gradient-to-r from-green-100 via-[#66f2bc] to-green-100 p-5 rounded-xl mb-6 flex items-center justify-between shadow">
+          <div className="bg-gradient-to-r from-green-100 via-[#66f2bc] to-green-100 dark:from-green-900 dark:via-green-700 dark:to-green-900 p-5 rounded-xl mb-6 flex items-center justify-between shadow">
             <div>
-              <h2 className="text-lg font-bold text-green-900">
+              <h2 className="text-lg font-bold text-green-900 dark:text-green-100">
                 Upgrade to Premium Membership
               </h2>
-              <p className="text-sm text-green-800">
+              <p className="text-sm text-green-800 dark:text-green-200">
                 Unlock All Premium Icons, No Ads, and more
               </p>
             </div>
@@ -53,21 +53,21 @@ export default function Dashboard() {
               title="Total candidatures"
               icon={<Users size={20} />}
               value={305}
-              color="from-green-400 to-green-500"
+              color="from-green-400 to-green-500 dark:from-green-700 dark:to-green-600"
               trend={12}
             />
             <MetricCard
               title="Total embauches"
               icon={<Star size={20} />}
               value={47}
-              color="from-blue-400 to-blue-500"
+              color="from-blue-400 to-blue-500 dark:from-blue-700 dark:to-blue-600"
               trend={5}
             />
             <MetricCard
               title="Total refus"
               icon={<FileText size={20} />}
               value={23}
-              color="from-red-400 to-red-500"
+              color="from-red-400 to-red-500 dark:from-red-700 dark:to-red-600"
               trend={-3}
             />
           </div>
@@ -81,7 +81,7 @@ export default function Dashboard() {
                 className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                   activeTab === tab
                     ? "bg-[#66f2bc] text-white shadow"
-                    : "text-gray-700 hover:bg-green-50"
+                    : "text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-green-800"
                 }`}
               >
                 {tab}
@@ -154,7 +154,7 @@ function TabContent({ tab }: { tab: string }) {
             Bienvenue à Sophie, notre nouvelle recruteuse !
           </Card>
           <Card title="Citation du jour" icon={<Quote size={18} />}>
-            <span className="italic text-gray-600">
+            <span className="italic text-gray-600 dark:text-gray-300">
               “Great vision without great people is irrelevant.”
             </span>
           </Card>
@@ -166,12 +166,14 @@ function TabContent({ tab }: { tab: string }) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card title="Candidatures par mois" icon={<BarChart2 size={18} />}>
-            <div className="text-gray-600 text-sm">
+            <div className="text-gray-600 dark:text-gray-300 text-sm">
               Placeholder chart coming soon...
             </div>
           </Card>
           <Card title="Taux de réussite" icon={<Star size={18} />}>
-            <p className="text-3xl font-bold text-green-600">76%</p>
+            <p className="text-3xl font-bold text-green-600 dark:text-green-300">
+              76%
+            </p>
           </Card>
           <LatestJobPosts />
         </div>
@@ -181,7 +183,7 @@ function TabContent({ tab }: { tab: string }) {
       return (
         <div className="grid gap-4">
           <Card title="Entretien prévu" icon={<Calendar size={18} />}>
-            <p className="text-gray-700 text-sm">
+            <p className="text-gray-700 dark:text-gray-300 text-sm">
               Entretien avec <strong>John Doe</strong> le 12/08 à 14h.
             </p>
             <button className="mt-2 px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700">
@@ -199,15 +201,15 @@ function TabContent({ tab }: { tab: string }) {
             title="Avis des utilisateurs"
             icon={<MessageSquare size={18} />}
           >
-            <p className="text-gray-700 text-sm">
+            <p className="text-gray-700 dark:text-gray-300 text-sm">
               ‘Super outil, très intuitif et efficace !’
             </p>
-            <p className="text-gray-700 text-sm mt-2">
+            <p className="text-gray-700 dark:text-gray-300 text-sm mt-2">
               ‘J’aimerais pouvoir personnaliser encore plus les dashboards.’
             </p>
             <textarea
               placeholder="Laissez votre feedback..."
-              className="mt-3 w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+              className="mt-3 w-full border rounded p-2 text-sm dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-300"
             ></textarea>
             <button className="mt-2 px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700">
               Envoyer
@@ -239,7 +241,7 @@ function Card({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="bg-white p-5 rounded-lg shadow hover:shadow-md transition">
+    <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow hover:shadow-md transition">
       <div className="flex items-center gap-2 mb-3 text-green-600 font-medium">
         {icon}
         {title}
@@ -276,9 +278,13 @@ function RemindersList() {
         {reminders.map((r, idx) => (
           <li
             key={idx}
-            className="flex items-center justify-between text-sm text-gray-700"
+            className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300"
           >
-            <span className={r.done ? "line-through text-gray-400" : ""}>
+            <span
+              className={
+                r.done ? "line-through text-gray-400 dark:text-gray-500" : ""
+              }
+            >
               {r.text}
             </span>
             {r.done ? (
@@ -318,11 +324,13 @@ function RecentActivity() {
       <ul className="space-y-2">
         {activities.map((a, idx) => (
           <li key={idx} className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-gray-700">
+            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
               {a.icon}
               <span>{a.text}</span>
             </div>
-            <span className="text-gray-400 text-xs">{a.time}</span>
+            <span className="text-gray-400 dark:text-gray-500 text-xs">
+              {a.time}
+            </span>
           </li>
         ))}
       </ul>
@@ -339,9 +347,9 @@ function LatestJobPosts() {
 
   return (
     <Card title="Derniers postes créés" icon={<Briefcase size={18} />}>
-      <table className="w-full text-sm text-gray-700">
+      <table className="w-full text-sm text-gray-700 dark:text-gray-300">
         <thead>
-          <tr className="border-b">
+          <tr className="border-b dark:border-gray-600">
             <th className="py-2 text-left">Poste</th>
             <th className="py-2 text-left">Date</th>
             <th className="py-2 text-left">Candidats</th>
@@ -349,7 +357,10 @@ function LatestJobPosts() {
         </thead>
         <tbody>
           {jobs.map((job, i) => (
-            <tr key={i} className="border-b hover:bg-gray-50">
+            <tr
+              key={i}
+              className="border-b hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
               <td className="py-2">{job.title}</td>
               <td className="py-2">{job.date}</td>
               <td className="py-2">{job.applicants}</td>

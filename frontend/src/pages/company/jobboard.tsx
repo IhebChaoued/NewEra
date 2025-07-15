@@ -15,7 +15,6 @@ export default function Jobboard() {
 
   const { token } = useCompanyAuthStore();
 
-  // Form fields for new job
   const [newJob, setNewJob] = useState<Partial<IJob>>({
     title: "",
     description: "",
@@ -67,7 +66,6 @@ export default function Jobboard() {
 
     try {
       if (editJobId) {
-        // Edit
         await axios.patch(
           `http://localhost:5000/api/jobs/${editJobId}`,
           newJob,
@@ -79,7 +77,6 @@ export default function Jobboard() {
         );
         alert("Job updated!");
       } else {
-        // Create
         await axios.post("http://localhost:5000/api/jobs", newJob, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -184,18 +181,18 @@ export default function Jobboard() {
         </div>
 
         {/* Filters & Search */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-wrap items-center gap-4">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm mb-6 flex flex-wrap items-center gap-4">
           <input
             type="text"
             placeholder="Rechercher un poste..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-[200px] border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
+            className="flex-1 min-w-[200px] border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
           />
           <select
             value={contractFilter}
             onChange={(e) => setContractFilter(e.target.value)}
-            className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
+            className="border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
           >
             <option value="">Type de contrat</option>
             <option value="CDI">CDI</option>
@@ -205,7 +202,7 @@ export default function Jobboard() {
           <select
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
-            className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
+            className="border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#66f2bc]"
           >
             <option value="">Localisation</option>
             <option value="Tunis">Tunis</option>
@@ -217,35 +214,35 @@ export default function Jobboard() {
         {/* Jobs grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
-            <p>Chargement...</p>
+            <p className="text-gray-700 dark:text-gray-300">Chargement...</p>
           ) : filteredJobs.length === 0 ? (
-            <p className="text-gray-500 col-span-full text-center mt-10">
+            <p className="text-gray-500 dark:text-gray-400 col-span-full text-center mt-10">
               Aucune offre disponible.
             </p>
           ) : (
             filteredJobs.map((job) => (
               <div
                 key={job._id}
-                className="relative bg-white p-4 rounded-xl shadow hover:shadow-md transition border border-gray-100"
+                className="relative bg-white dark:bg-gray-800 p-4 rounded-xl shadow hover:shadow-md transition border border-gray-100 dark:border-gray-700"
               >
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
                   {job.title}
                 </h3>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                   {job.location} | {job.salaryRange || "Salaire à définir"}
                 </p>
-                <p className="text-sm text-gray-700 line-clamp-3 mb-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 mb-3">
                   {job.description}
                 </p>
                 <div className="flex gap-2">
                   <button
-                    className="text-blue-600 text-xs hover:underline"
+                    className="text-blue-600 dark:text-blue-400 text-xs hover:underline"
                     onClick={() => handleEdit(job)}
                   >
                     Modifier
                   </button>
                   <button
-                    className="text-red-600 text-xs hover:underline"
+                    className="text-red-600 dark:text-red-400 text-xs hover:underline"
                     onClick={() => handleDelete(job._id)}
                   >
                     Supprimer
@@ -260,8 +257,8 @@ export default function Jobboard() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-lg">
+            <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
               {editJobId ? "Modifier l'offre" : "Créer une nouvelle offre"}
             </h2>
             <form onSubmit={handleCreateOrUpdateJob} className="space-y-4">
@@ -271,7 +268,7 @@ export default function Jobboard() {
                 placeholder="Titre du poste"
                 value={newJob.title || ""}
                 onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 rounded"
                 required
               />
               <textarea
@@ -279,7 +276,7 @@ export default function Jobboard() {
                 placeholder="Description"
                 value={newJob.description || ""}
                 onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 rounded"
                 required
               />
               <textarea
@@ -287,7 +284,7 @@ export default function Jobboard() {
                 placeholder="Compétences requises"
                 value={newJob.requirements || ""}
                 onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 rounded"
               />
               <input
                 type="text"
@@ -295,7 +292,7 @@ export default function Jobboard() {
                 placeholder="Localisation"
                 value={newJob.location || ""}
                 onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 rounded"
               />
               <input
                 type="text"
@@ -303,7 +300,7 @@ export default function Jobboard() {
                 placeholder="Fourchette salariale"
                 value={newJob.salaryRange || ""}
                 onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 rounded"
               />
               <input
                 type="text"
@@ -311,9 +308,9 @@ export default function Jobboard() {
                 placeholder="Instructions pour postuler"
                 value={newJob.howToApply || ""}
                 onChange={handleChange}
-                className="w-full border px-3 py-2 rounded"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 rounded"
               />
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm dark:text-gray-300">
                 <input
                   type="checkbox"
                   name="blurry"
@@ -331,7 +328,7 @@ export default function Jobboard() {
                     resetForm();
                     setEditJobId(null);
                   }}
-                  className="px-4 py-2 text-gray-600 hover:underline"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:underline"
                 >
                   Annuler
                 </button>

@@ -20,7 +20,6 @@ import CountUp from "react-countup";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 export default function Stats() {
-  // Fake data for charts
   const applicationsData = [
     { mois: "Jan", candidatures: 30 },
     { mois: "Fév", candidatures: 50 },
@@ -82,23 +81,30 @@ export default function Stats() {
         </div>
 
         {/* ✅ Applications Over Time */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 text-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-100">
             Candidatures au fil du temps
           </h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={applicationsData}>
-              <XAxis dataKey="mois" />
-              <YAxis />
-              <Tooltip />
+              <XAxis dataKey="mois" stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
+                  color: "#f9fafb",
+                  border: "none",
+                }}
+                labelStyle={{ color: "#f9fafb" }}
+              />
               <Bar dataKey="candidatures" fill="#60a5fa" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* ✅ Hires vs Rejections */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 text-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-100">
             Répartition des résultats
           </h2>
           <ResponsiveContainer width="100%" height={250}>
@@ -115,23 +121,37 @@ export default function Stats() {
                   <Cell key={`cell-${index}`} fill={pieColors[index]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
+                  color: "#f9fafb",
+                  border: "none",
+                }}
+                labelStyle={{ color: "#f9fafb" }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* ✅ Jobs Posted Per Month */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 text-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-100">
             Postes publiés par mois
           </h2>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={jobsData}>
-              <XAxis dataKey="mois" />
-              <YAxis />
-              <CartesianGrid strokeDasharray="3 3" />
-              <Tooltip />
-              <Legend />
+              <XAxis dataKey="mois" stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
+                  color: "#f9fafb",
+                  border: "none",
+                }}
+                labelStyle={{ color: "#f9fafb" }}
+              />
+              <Legend wrapperStyle={{ color: "#f9fafb" }} />
               <Line
                 type="monotone"
                 dataKey="postes"
@@ -144,8 +164,8 @@ export default function Stats() {
 
         {/* ✅ Jobs Recruited */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-100">
               Postes recrutés (Graphique)
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -154,20 +174,36 @@ export default function Stats() {
                 layout="vertical"
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                <XAxis type="number" />
-                <YAxis dataKey="title" type="category" width={120} />
-                <Tooltip />
+                <XAxis type="number" stroke="#9ca3af" />
+                <YAxis
+                  dataKey="title"
+                  type="category"
+                  width={120}
+                  stroke="#9ca3af"
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
+                    color: "#f9fafb",
+                    border: "none",
+                  }}
+                  labelStyle={{ color: "#f9fafb" }}
+                />
                 <Bar dataKey="number" fill="#34d399" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-4">Top postes recrutés</h3>
-            <ul className="divide-y divide-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-100">
+              Top postes recrutés
+            </h3>
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {recruitedJobs.map((job) => (
                 <li key={job.title} className="py-2 flex justify-between">
-                  <span className="text-gray-700">{job.title}</span>
+                  <span className="text-gray-700 dark:text-gray-100">
+                    {job.title}
+                  </span>
                   <span className="font-semibold text-green-600">
                     {job.number}
                   </span>
@@ -191,10 +227,11 @@ type KPIProps = {
 
 function KPICard({ label, value, color, trend, isPercentage }: KPIProps) {
   const colorClasses: Record<string, string> = {
-    green: "text-green-800 bg-green-100",
-    blue: "text-blue-800 bg-blue-100",
-    purple: "text-purple-800 bg-purple-100",
-    red: "text-red-800 bg-red-100",
+    green: "text-green-800 bg-green-100 dark:bg-green-900 dark:text-green-300",
+    blue: "text-blue-800 bg-blue-100 dark:bg-blue-900 dark:text-blue-300",
+    purple:
+      "text-purple-800 bg-purple-100 dark:bg-purple-900 dark:text-purple-300",
+    red: "text-red-800 bg-red-100 dark:bg-red-900 dark:text-red-300",
   };
 
   const TrendIcon = trend >= 0 ? ArrowUpRight : ArrowDownRight;
@@ -202,7 +239,7 @@ function KPICard({ label, value, color, trend, isPercentage }: KPIProps) {
 
   return (
     <div className={`rounded-lg p-4 ${colorClasses[color]}`}>
-      <h3 className="text-gray-600 text-sm">{label}</h3>
+      <h3 className="text-gray-600 dark:text-gray-300 text-sm">{label}</h3>
       <p className="text-2xl font-bold">
         {typeof value === "number" ? (
           <CountUp end={value} duration={1.5} separator=" " />

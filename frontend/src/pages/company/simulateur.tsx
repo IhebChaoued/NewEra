@@ -2,10 +2,8 @@
 
 import Layout from "@/components/company/Layout";
 import { useState, useEffect } from "react";
-// import axios from "axios";
 
 export default function Simulateur() {
-  // Dummy lists - replace these with data from your backend
   const [jobs, setJobs] = useState<{ _id: string; title: string }[]>([]);
   const [candidates, setCandidates] = useState<{ _id: string; name: string }[]>(
     []
@@ -20,9 +18,7 @@ export default function Simulateur() {
     details: { criterion: string; job: string; candidate: string }[];
   } | null>(null);
 
-  // Fetch jobs and candidates from backend (dummy for now)
   useEffect(() => {
-    // Example dummy data
     setJobs([
       { _id: "job1", title: "Développeur Frontend" },
       { _id: "job2", title: "Data Analyst" },
@@ -42,7 +38,6 @@ export default function Simulateur() {
 
     setLoading(true);
 
-    // TODO → replace with real API call to your AI backend
     setTimeout(() => {
       setResult({
         score: 82,
@@ -70,20 +65,20 @@ export default function Simulateur() {
 
   return (
     <Layout>
-      <div className="bg-white p-6 rounded-xl shadow-md space-y-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-8">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
           Simulateur d’adéquation
         </h1>
 
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-1 text-gray-700">
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Offre d’emploi
             </label>
             <select
               value={selectedJobId}
               onChange={(e) => setSelectedJobId(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 w-full"
             >
               <option value="">Sélectionnez une offre</option>
               {jobs.map((job) => (
@@ -95,13 +90,13 @@ export default function Simulateur() {
           </div>
 
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-1 text-gray-700">
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               Candidat
             </label>
             <select
               value={selectedCandidateId}
               onChange={(e) => setSelectedCandidateId(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 w-full"
+              className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 w-full"
             >
               <option value="">Sélectionnez un candidat</option>
               {candidates.map((c) => (
@@ -125,24 +120,39 @@ export default function Simulateur() {
 
         {result && (
           <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-4 text-green-700">
+            <h2 className="text-xl font-semibold mb-4 text-green-700 dark:text-green-400">
               Résultat : {result.score}%
             </h2>
 
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-gray-100">
+            <table className="min-w-full border border-gray-200 dark:border-gray-700">
+              <thead className="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                  <th className="p-2 text-left text-gray-700">Critère</th>
-                  <th className="p-2 text-left text-gray-700">Offre</th>
-                  <th className="p-2 text-left text-gray-700">Candidat</th>
+                  <th className="p-2 text-left text-gray-700 dark:text-gray-200">
+                    Critère
+                  </th>
+                  <th className="p-2 text-left text-gray-700 dark:text-gray-200">
+                    Offre
+                  </th>
+                  <th className="p-2 text-left text-gray-700 dark:text-gray-200">
+                    Candidat
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white dark:bg-gray-800">
                 {result.details.map((row, i) => (
-                  <tr key={i} className="border-t">
-                    <td className="p-2">{row.criterion}</td>
-                    <td className="p-2">{row.job}</td>
-                    <td className="p-2">{row.candidate}</td>
+                  <tr
+                    key={i}
+                    className="border-t border-gray-200 dark:border-gray-700"
+                  >
+                    <td className="p-2 text-gray-800 dark:text-gray-100">
+                      {row.criterion}
+                    </td>
+                    <td className="p-2 text-gray-800 dark:text-gray-100">
+                      {row.job}
+                    </td>
+                    <td className="p-2 text-gray-800 dark:text-gray-100">
+                      {row.candidate}
+                    </td>
                   </tr>
                 ))}
               </tbody>

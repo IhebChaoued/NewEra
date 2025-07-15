@@ -24,7 +24,6 @@ export default function CRM() {
   const [addingStepForAppId, setAddingStepForAppId] = useState<string | null>(
     null
   );
-
   const [newStepName, setNewStepName] = useState("");
 
   const {
@@ -36,7 +35,6 @@ export default function CRM() {
     saveStepResult,
   } = useCompanyCRM();
 
-  // ✅ Custom fields logic
   const [showCustomFieldModal, setShowCustomFieldModal] = useState(false);
   const [customFields, setCustomFields] = useState<
     { _id: string; name: string; type: string }[]
@@ -44,7 +42,6 @@ export default function CRM() {
   const [newCustomFieldName, setNewCustomFieldName] = useState("");
   const [newCustomFieldType, setNewCustomFieldType] = useState("text");
 
-  // Fetch custom fields from backend
   useEffect(() => {
     axios
       .get<{ _id: string; name: string; type: string }[]>("/api/custom-fields")
@@ -105,7 +102,6 @@ export default function CRM() {
       const userId = app.userId?._id || "";
       const jobId = app.jobId?._id || "";
       const key = `${userId}-${jobId}`;
-
       if (!uniqueAppsMap.has(key)) {
         uniqueAppsMap.set(key, app);
       }
@@ -151,22 +147,22 @@ export default function CRM() {
     <Layout>
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Sidebar */}
-        <div className="w-full lg:w-72 xl:w-64 bg-white rounded-xl p-4 shadow-sm border flex-shrink-0 text-left self-start">
+        <div className="w-full lg:w-72 xl:w-64 bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border dark:border-gray-700 text-left self-start">
           <div className="flex flex-col space-y-2 items-start">
-            <button className="flex items-center gap-2 text-gray-800 font-medium px-2 py-2 rounded-md hover:bg-gray-100 w-full transition">
+            <button className="flex items-center gap-2 text-gray-800 dark:text-gray-100 font-medium px-2 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 w-full transition">
               <Home size={18} />
               Accueil
             </button>
 
-            <div className="flex items-center gap-2 mt-6 px-2 text-gray-800 font-medium">
+            <div className="flex items-center gap-2 mt-6 px-2 text-gray-800 dark:text-gray-100 font-medium">
               <CheckCircle size={16} className="text-green-600" />
               Mon travail
             </div>
 
-            <hr className="my-4 w-full" />
+            <hr className="my-4 w-full border-gray-300 dark:border-gray-600" />
 
             <div className="flex items-center justify-between px-2 w-full">
-              <div className="flex items-center gap-2 font-semibold text-gray-900">
+              <div className="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
                 <Home size={16} />
                 <span className="truncate">Espace de travail</span>
               </div>
@@ -194,7 +190,7 @@ export default function CRM() {
         </div>
 
         {/* Main CRM content */}
-        <div className="flex-1 bg-white rounded-xl p-6 shadow-md">
+        <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div className="flex flex-wrap gap-4 flex-1">
               <input
@@ -202,18 +198,23 @@ export default function CRM() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher..."
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full max-w-md"
+                className="border border-gray-300 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-4 py-2 w-full max-w-md"
               />
             </div>
           </div>
 
-          {loading && <p>Chargement...</p>}
+          {loading && (
+            <p className="text-gray-700 dark:text-gray-100">Chargement...</p>
+          )}
           {error && <p className="text-red-500">{error}</p>}
 
           <div className="flex flex-col gap-12">
             {Object.entries(stages).map(([status, apps]) => (
-              <div key={status} className="bg-gray-50 rounded-lg border p-4">
-                <h2 className="text-lg font-semibold mb-4 text-black">
+              <div
+                key={status}
+                className="bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600 p-4"
+              >
+                <h2 className="text-lg font-semibold mb-4 text-black dark:text-gray-100">
                   {status === "pending"
                     ? "Nouveaux candidats"
                     : status === "in_progress"
@@ -232,7 +233,7 @@ export default function CRM() {
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-100 text-gray-900 sticky top-0 z-10">
+                    <thead className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 sticky top-0 z-10">
                       <tr>
                         <th className="p-2 text-left">Nom</th>
                         <th className="p-2 text-left">Email</th>
@@ -268,20 +269,23 @@ export default function CRM() {
                       )}
 
                       {apps.map((app) => (
-                        <tr key={app._id} className="border-t hover:bg-gray-50">
-                          <td className="p-2 text-black">
+                        <tr
+                          key={app._id}
+                          className="border-t dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        >
+                          <td className="p-2 text-black dark:text-gray-100">
                             {app.userId?.firstName} {app.userId?.lastName}
                           </td>
-                          <td className="p-2 text-black">
+                          <td className="p-2 text-black dark:text-gray-100">
                             {app.userId?.email}
                           </td>
-                          <td className="p-2 text-black">
+                          <td className="p-2 text-black dark:text-gray-100">
                             {app.userId?.phone || "-"}
                           </td>
-                          <td className="p-2 text-black">
+                          <td className="p-2 text-black dark:text-gray-100">
                             {app.jobId?.title || "-"}
                           </td>
-                          <td className="p-2 text-black">
+                          <td className="p-2 text-black dark:text-gray-100">
                             {app.createdAt
                               ? new Date(app.createdAt).toLocaleDateString(
                                   "fr-FR"
@@ -304,7 +308,10 @@ export default function CRM() {
                           </td>
 
                           {customFields.map((field) => (
-                            <td key={field._id} className="p-2 text-black">
+                            <td
+                              key={field._id}
+                              className="p-2 text-black dark:text-gray-100"
+                            >
                               -
                             </td>
                           ))}
@@ -340,14 +347,14 @@ export default function CRM() {
                                           setAddingStepForAppId(null)
                                         }
                                         autoFocus
-                                        className="border text-xs px-2 py-1 rounded w-full"
+                                        className="border text-xs px-2 py-1 rounded w-full dark:bg-gray-700 dark:text-gray-100"
                                       />
                                     </div>
                                   ) : (
                                     <button
-                                      onClick={() => {
-                                        setAddingStepForAppId(app._id);
-                                      }}
+                                      onClick={() =>
+                                        setAddingStepForAppId(app._id)
+                                      }
                                       className="flex items-center gap-1 text-green-600 text-xs hover:underline"
                                     >
                                       <Plus size={12} /> Ajouter étape
@@ -375,7 +382,7 @@ export default function CRM() {
                                       );
                                       setEditingStepResult(null);
                                     }}
-                                    className="text-xs border rounded px-1 py-0.5 w-full"
+                                    className="text-xs border rounded px-1 py-0.5 w-full dark:bg-gray-700 dark:text-gray-100"
                                   >
                                     <option value="">Non défini</option>
                                     <option value="GO">Validé</option>
@@ -386,12 +393,12 @@ export default function CRM() {
                                   <div
                                     className={`cursor-pointer px-2 py-1 text-xs rounded ${
                                       step.result === "GO"
-                                        ? "bg-green-100 text-green-800"
+                                        ? "bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100"
                                         : step.result === "NO_GO"
-                                        ? "bg-red-100 text-red-800"
+                                        ? "bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100"
                                         : step.result === "STILL"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : "bg-gray-100 text-gray-800"
+                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100"
+                                        : "bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100"
                                     }`}
                                     onClick={() =>
                                       setEditingStepResult({
@@ -438,30 +445,34 @@ export default function CRM() {
         </div>
       </div>
 
-      {/* ✅ Custom field modal */}
+      {/* Custom Field Modal */}
       {showCustomFieldModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
               Nouveau champ personnalisé
             </h3>
 
             <div className="mb-4">
-              <label className="text-sm block mb-1">Nom du champ</label>
+              <label className="text-sm block mb-1 text-gray-800 dark:text-gray-100">
+                Nom du champ
+              </label>
               <input
                 type="text"
                 value={newCustomFieldName}
                 onChange={(e) => setNewCustomFieldName(e.target.value)}
-                className="border rounded px-3 py-2 w-full"
+                className="border rounded px-3 py-2 w-full dark:bg-gray-700 dark:text-gray-100"
               />
             </div>
 
             <div className="mb-4">
-              <label className="text-sm block mb-1">Type de champ</label>
+              <label className="text-sm block mb-1 text-gray-800 dark:text-gray-100">
+                Type de champ
+              </label>
               <select
                 value={newCustomFieldType}
                 onChange={(e) => setNewCustomFieldType(e.target.value)}
-                className="border rounded px-3 py-2 w-full"
+                className="border rounded px-3 py-2 w-full dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="text">Texte</option>
                 <option value="number">Nombre</option>
@@ -473,7 +484,7 @@ export default function CRM() {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowCustomFieldModal(false)}
-                className="px-4 py-2 rounded border text-gray-700"
+                className="px-4 py-2 rounded border text-gray-700 dark:text-gray-100"
               >
                 Annuler
               </button>

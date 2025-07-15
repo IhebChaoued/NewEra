@@ -1,5 +1,3 @@
-// A small card list that shows candidates and a "Discover All" button
-
 const candidates = [
   { name: "Nom Prenom", status: "En cours" },
   { name: "Nom Prenom", status: "Validé" },
@@ -15,11 +13,15 @@ export default function CandidatesList() {
         {candidates.map((cand, idx) => (
           <div
             key={idx}
-            className="bg-white p-3 rounded-lg shadow-sm border"
+            className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border dark:border-gray-700"
           >
-            <p className="text-sm font-bold text-black">{cand.name}</p>
-            <p className="text-xs text-gray-500">{cand.status}</p>
-            <button className="text-xs text-blue-600 mt-1 hover:underline">
+            <p className="text-sm font-bold text-black dark:text-gray-100">
+              {cand.name}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {cand.status}
+            </p>
+            <button className="text-xs text-blue-600 dark:text-blue-400 mt-1 hover:underline">
               See Details
             </button>
           </div>
@@ -27,7 +29,7 @@ export default function CandidatesList() {
       </div>
 
       <div className="mt-6 text-center">
-        <button className="text-blue-600 text-sm hover:underline">
+        <button className="text-blue-600 dark:text-blue-400 text-sm hover:underline">
           Discover All
         </button>
       </div>

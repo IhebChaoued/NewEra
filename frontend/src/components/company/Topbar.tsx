@@ -13,6 +13,17 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // Dark mode state
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
+
   // Derive title from pathname
   const pageTitle =
     router.pathname
@@ -44,14 +55,14 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 border-b bg-white shadow-sm relative">
+    <header className="flex items-center justify-between p-4 border-b bg-white shadow-sm dark:bg-gray-900 dark:border-gray-700 relative">
       <div className="flex items-center gap-4 min-w-0">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded hover:bg-gray-100"
+          className="lg:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
         >
           <svg
-            className="h-6 w-6 text-gray-800"
+            className="h-6 w-6 text-gray-800 dark:text-gray-100"
             fill="none"
             stroke="currentColor"
             strokeWidth={2}
@@ -64,7 +75,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
             />
           </svg>
         </button>
-        <h2 className="text-xl font-bold text-gray-800 truncate">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 truncate">
           {pageTitle}
         </h2>
       </div>
@@ -73,16 +84,29 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         ref={dropdownRef}
         className="flex items-center gap-4 shrink-0 relative"
       >
-        <span className="text-lg cursor-pointer">🔔</span>
-        <span className="text-lg cursor-pointer">❤️</span>
+        {/* Notifications */}
+        <span className="text-lg cursor-pointer text-gray-800 dark:text-gray-100">
+          🔔
+        </span>
+        <span className="text-lg cursor-pointer text-gray-800 dark:text-gray-100">
+          ❤️
+        </span>
 
-        <span className="hidden lg:inline font-medium">
+        {/* Dark mode toggle */}
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="text-gray-800 dark:text-gray-100 hover:text-green-500 transition"
+        >
+          {darkMode ? "☀️" : "🌙"}
+        </button>
+
+        <span className="hidden lg:inline font-medium text-gray-800 dark:text-gray-100">
           {company ? company.name : "Guest"}
         </span>
 
         <div
           onClick={() => setIsOpen((prev) => !prev)}
-          className="w-10 h-10 rounded-full overflow-hidden cursor-pointer bg-gray-300 flex items-center justify-center"
+          className="w-10 h-10 rounded-full overflow-hidden cursor-pointer bg-gray-300 dark:bg-gray-700 flex items-center justify-center"
         >
           {company?.logo ? (
             <Image
@@ -96,7 +120,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         </div>
 
         <div
-          className={`absolute right-0 top-14 mt-2 w-48 bg-white shadow-md rounded z-50 transition-all duration-300 ease-in-out ${
+          className={`absolute right-0 top-14 mt-2 w-48 bg-white dark:bg-gray-800 shadow-md rounded z-50 transition-all duration-300 ease-in-out ${
             isOpen
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 -translate-y-2 pointer-events-none"
@@ -104,7 +128,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         >
           <button
             onClick={handleLogout}
-            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
           >
             Logout
           </button>

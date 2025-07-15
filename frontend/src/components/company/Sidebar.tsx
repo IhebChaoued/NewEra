@@ -41,9 +41,11 @@ export default function Sidebar() {
   const router = useRouter();
 
   return (
-    <aside className="w-64 h-screen bg-white shadow-md p-4 flex flex-col justify-between">
+    <aside className="w-64 h-screen bg-white dark:bg-gray-800 shadow-md p-4 flex flex-col justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-blue-600 mb-6">CaptureGet</h1>
+        <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-6">
+          CaptureGet
+        </h1>
         <ul className="space-y-4">
           {menu.map((item) => (
             <li key={item.label}>
@@ -51,8 +53,8 @@ export default function Sidebar() {
                 href={item.path}
                 className={`flex items-center gap-3 px-2 py-1 rounded-md transition ${
                   router.pathname === item.path
-                    ? "text-blue-600 font-semibold"
-                    : "text-gray-700 hover:text-blue-500"
+                    ? "text-blue-600 dark:text-blue-400 font-semibold"
+                    : "text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400"
                 }`}
               >
                 {item.icon}
@@ -62,11 +64,11 @@ export default function Sidebar() {
           ))}
         </ul>
       </div>
-      <ul className="space-y-3 text-sm text-gray-500">
+      <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
         {bottom.map((item) => (
           <li
             key={item.label}
-            className="flex items-center gap-3 hover:text-blue-400 cursor-pointer"
+            className="flex items-center gap-3 hover:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
           >
             {item.icon}
             <span>{item.label}</span>
