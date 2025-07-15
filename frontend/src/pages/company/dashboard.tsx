@@ -3,32 +3,37 @@
 import Layout from "@/components/company/Layout";
 import { useState } from "react";
 import CandidatesList from "@/components/company/CandidatesList";
-import { useCompanyCRM } from "@/lib/useCompanyCRM";
-import UserCard from "@/components/company/UserCard";
 import CountUp from "react-countup";
+import {
+  ArrowUpRight,
+  Calendar,
+  FileText,
+  BarChart2,
+  Star,
+  Users,
+  MessageSquare,
+  Bell,
+  CheckCircle,
+  ClipboardCheck,
+  TrendingUp,
+  Activity,
+  Quote,
+  Briefcase,
+  Plus,
+} from "lucide-react";
 
-const tabs = ["News", "Stats", "Agenda", "Feedback"];
+const tabs = ["News", "Stats", "Agenda", "Feedback", "Activity"];
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("News");
-  const { applications } = useCompanyCRM();
-
-  // Just for demo KPI
-  const totalApplications = applications.length;
-  const totalHires = applications.filter(
-    (a) => a.status === "qualified"
-  ).length;
-  const totalRejected = applications.filter(
-    (a) => a.status === "not_qualified"
-  ).length;
 
   return (
     <Layout>
-      <div className="relative flex">
+      <div className="relative flex flex-col lg:flex-row">
         {/* Main content */}
-        <div className="responsive-container flex-1 pr-0 lg:pr-80">
+        <div className="flex-1 pr-0 lg:pr-80">
           {/* Upgrade box */}
-          <div className="bg-[#66f2bc] p-4 rounded-xl mb-6 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-green-100 via-[#66f2bc] to-green-100 p-5 rounded-xl mb-6 flex items-center justify-between shadow">
             <div>
               <h2 className="text-lg font-bold text-green-900">
                 Upgrade to Premium Membership
@@ -37,74 +42,58 @@ export default function Dashboard() {
                 Unlock All Premium Icons, No Ads, and more
               </p>
             </div>
-            <button className="bg-green-700 text-white px-4 py-2 rounded-md">
+            <button className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-md transition">
               Upgrade
             </button>
           </div>
 
-          {/* KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <KpiCard
-              label="Total candidatures"
-              value={totalApplications}
-              color="green"
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <MetricCard
+              title="Total candidatures"
+              icon={<Users size={20} />}
+              value={305}
+              color="from-green-400 to-green-500"
+              trend={12}
             />
-            <KpiCard label="Total embauches" value={totalHires} color="blue" />
-            <KpiCard label="Total refus" value={totalRejected} color="red" />
+            <MetricCard
+              title="Total embauches"
+              icon={<Star size={20} />}
+              value={47}
+              color="from-blue-400 to-blue-500"
+              trend={5}
+            />
+            <MetricCard
+              title="Total refus"
+              icon={<FileText size={20} />}
+              value={23}
+              color="from-red-400 to-red-500"
+              trend={-3}
+            />
           </div>
 
           {/* Tab buttons */}
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 max-w-full overflow-hidden">
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-12 py-3 font-medium transition ${
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                   activeTab === tab
-                    ? "text-white rounded-xl"
-                    : "text-black hover:text-green-600 rounded-full"
+                    ? "bg-[#66f2bc] text-white shadow"
+                    : "text-gray-700 hover:bg-green-50"
                 }`}
-                style={activeTab === tab ? { backgroundColor: "#66f2bc" } : {}}
               >
                 {tab}
               </button>
             ))}
           </div>
 
-          {/* Active tab content */}
-          <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-            <h3 className="text-lg font-semibold mb-2">{activeTab} Content</h3>
-            <p className="text-gray-500">
-              This is the content area for <strong>{activeTab}</strong>.
-            </p>
-          </div>
-
-          {/* Latest Applications */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">
-              Dernières candidatures
-            </h3>
-
-            {applications.length === 0 && (
-              <p className="text-gray-500">Aucune candidature disponible.</p>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {applications.slice(0, 6).map((app) => (
-                <UserCard
-                  key={app._id}
-                  name={`${app.userId?.firstName || ""} ${
-                    app.userId?.lastName || ""
-                  }`}
-                  status={app.status}
-                  imageUrl={app.userId?.avatar || "/default-avatar.png"}
-                />
-              ))}
-            </div>
-          </div>
+          {/* Tab Content */}
+          <TabContent tab={activeTab} />
         </div>
 
-        {/* Right sidebar */}
+        {/* Candidates Sidebar */}
         <div className="hidden lg:block absolute right-6 top-0 h-full">
           <CandidatesList />
         </div>
@@ -113,25 +102,261 @@ export default function Dashboard() {
   );
 }
 
-type KpiCardProps = {
-  label: string;
+// Metric Card Component
+function MetricCard({
+  title,
+  icon,
+  value,
+  color,
+  trend,
+}: {
+  title: string;
+  icon: React.ReactNode;
   value: number;
-  color: "green" | "blue" | "red";
-};
+  color: string;
+  trend: number;
+}) {
+  return (
+    <div
+      className={`bg-gradient-to-br ${color} p-4 rounded-xl text-white flex justify-between items-center shadow hover:shadow-lg transition`}
+    >
+      <div>
+        <p className="text-sm font-medium">{title}</p>
+        <h2 className="text-2xl font-bold mt-1">
+          <CountUp end={value} duration={1.5} separator=" " />
+        </h2>
+        <p className="text-xs mt-1 flex items-center">
+          <ArrowUpRight
+            size={14}
+            className={`mr-1 ${
+              trend >= 0 ? "text-green-200" : "text-red-200 rotate-45"
+            }`}
+          />
+          {trend >= 0 ? "+" : ""}
+          {trend}%
+        </p>
+      </div>
+      <div className="opacity-50">{icon}</div>
+    </div>
+  );
+}
 
-function KpiCard({ label, value, color }: KpiCardProps) {
-  const colorMap = {
-    green: "bg-green-100 text-green-800",
-    blue: "bg-blue-100 text-blue-800",
-    red: "bg-red-100 text-red-800",
-  };
+// Tab content
+function TabContent({ tab }: { tab: string }) {
+  switch (tab) {
+    case "News":
+      return (
+        <div className="grid gap-4">
+          <Card title="Nouvelle fonctionnalité" icon={<BarChart2 size={18} />}>
+            Nous avons ajouté des statistiques avancées pour vos analyses.
+          </Card>
+          <Card title="Annonce équipe" icon={<Users size={18} />}>
+            Bienvenue à Sophie, notre nouvelle recruteuse !
+          </Card>
+          <Card title="Citation du jour" icon={<Quote size={18} />}>
+            <span className="italic text-gray-600">
+              “Great vision without great people is irrelevant.”
+            </span>
+          </Card>
+          <QuickLinks />
+        </div>
+      );
+
+    case "Stats":
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card title="Candidatures par mois" icon={<BarChart2 size={18} />}>
+            <div className="text-gray-600 text-sm">
+              Placeholder chart coming soon...
+            </div>
+          </Card>
+          <Card title="Taux de réussite" icon={<Star size={18} />}>
+            <p className="text-3xl font-bold text-green-600">76%</p>
+          </Card>
+          <LatestJobPosts />
+        </div>
+      );
+
+    case "Agenda":
+      return (
+        <div className="grid gap-4">
+          <Card title="Entretien prévu" icon={<Calendar size={18} />}>
+            <p className="text-gray-700 text-sm">
+              Entretien avec <strong>John Doe</strong> le 12/08 à 14h.
+            </p>
+            <button className="mt-2 px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700">
+              Confirmer
+            </button>
+          </Card>
+          <RemindersList />
+        </div>
+      );
+
+    case "Feedback":
+      return (
+        <div className="grid gap-4">
+          <Card
+            title="Avis des utilisateurs"
+            icon={<MessageSquare size={18} />}
+          >
+            <p className="text-gray-700 text-sm">
+              ‘Super outil, très intuitif et efficace !’
+            </p>
+            <p className="text-gray-700 text-sm mt-2">
+              ‘J’aimerais pouvoir personnaliser encore plus les dashboards.’
+            </p>
+            <textarea
+              placeholder="Laissez votre feedback..."
+              className="mt-3 w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+            ></textarea>
+            <button className="mt-2 px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700">
+              Envoyer
+            </button>
+          </Card>
+        </div>
+      );
+
+    case "Activity":
+      return (
+        <div className="grid gap-4">
+          <RecentActivity />
+        </div>
+      );
+
+    default:
+      return null;
+  }
+}
+
+// Generic Card Component
+function Card({
+  title,
+  children,
+  icon,
+}: {
+  title: string;
+  children: React.ReactNode;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white p-5 rounded-lg shadow hover:shadow-md transition">
+      <div className="flex items-center gap-2 mb-3 text-green-600 font-medium">
+        {icon}
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Quick Links
+function QuickLinks() {
+  return (
+    <div className="flex gap-3 mt-4">
+      <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">
+        <Plus size={14} /> Nouveau poste
+      </button>
+      <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">
+        <Plus size={14} /> Ajouter candidat
+      </button>
+    </div>
+  );
+}
+
+// Reminders List
+function RemindersList() {
+  const reminders = [
+    { text: "Appeler John demain", done: false },
+    { text: "Revoir le job Marketing", done: true },
+  ];
 
   return (
-    <div className={`rounded-lg p-4 ${colorMap[color]}`}>
-      <h4 className="text-sm font-semibold">{label}</h4>
-      <p className="text-3xl font-bold mt-2">
-        <CountUp end={value} duration={1.5} separator=" " />
-      </p>
-    </div>
+    <Card title="Rappels" icon={<Bell size={18} />}>
+      <ul className="space-y-2">
+        {reminders.map((r, idx) => (
+          <li
+            key={idx}
+            className="flex items-center justify-between text-sm text-gray-700"
+          >
+            <span className={r.done ? "line-through text-gray-400" : ""}>
+              {r.text}
+            </span>
+            {r.done ? (
+              <CheckCircle size={16} className="text-green-500" />
+            ) : (
+              <ClipboardCheck size={16} className="text-gray-400" />
+            )}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+// Recent Activity
+function RecentActivity() {
+  const activities = [
+    {
+      icon: <Briefcase size={16} />,
+      text: "Nouveau poste Frontend Developer créé.",
+      time: "il y a 2h",
+    },
+    {
+      icon: <Users size={16} />,
+      text: "Sophie a ajouté un candidat.",
+      time: "il y a 4h",
+    },
+    {
+      icon: <TrendingUp size={16} />,
+      text: "Statistiques mises à jour.",
+      time: "hier",
+    },
+  ];
+
+  return (
+    <Card title="Activité récente" icon={<Activity size={18} />}>
+      <ul className="space-y-2">
+        {activities.map((a, idx) => (
+          <li key={idx} className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-gray-700">
+              {a.icon}
+              <span>{a.text}</span>
+            </div>
+            <span className="text-gray-400 text-xs">{a.time}</span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+// Latest Job Posts Table
+function LatestJobPosts() {
+  const jobs = [
+    { title: "Frontend Developer", date: "10/07/2025", applicants: 12 },
+    { title: "UX Designer", date: "08/07/2025", applicants: 5 },
+  ];
+
+  return (
+    <Card title="Derniers postes créés" icon={<Briefcase size={18} />}>
+      <table className="w-full text-sm text-gray-700">
+        <thead>
+          <tr className="border-b">
+            <th className="py-2 text-left">Poste</th>
+            <th className="py-2 text-left">Date</th>
+            <th className="py-2 text-left">Candidats</th>
+          </tr>
+        </thead>
+        <tbody>
+          {jobs.map((job, i) => (
+            <tr key={i} className="border-b hover:bg-gray-50">
+              <td className="py-2">{job.title}</td>
+              <td className="py-2">{job.date}</td>
+              <td className="py-2">{job.applicants}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
   );
 }
