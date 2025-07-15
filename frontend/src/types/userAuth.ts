@@ -4,6 +4,8 @@ export interface User {
   lastName: string;
   email: string;
   cvUrl?: string;
+  phone?: string;
+  avatar?: string;
 }
 
 export interface UserRegisterData {
