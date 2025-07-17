@@ -13,18 +13,29 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  // Dark mode state
   const [darkMode, setDarkMode] = useState(false);
 
+  // Load theme from localStorage on mount
   useEffect(() => {
-    if (darkMode) {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
+      setDarkMode(true);
     } else {
       document.documentElement.classList.remove("dark");
+      setDarkMode(false);
     }
-  }, [darkMode]);
+  }, []);
 
-  // Derive title from pathname
+  // Toggle dark mode and save preference
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem("theme", newMode ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", newMode);
+  };
+
+  // Get page title from route
   const pageTitle =
     router.pathname
       .split("/")
@@ -42,7 +53,6 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         setIsOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -84,7 +94,6 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         ref={dropdownRef}
         className="flex items-center gap-4 shrink-0 relative"
       >
-        {/* Notifications */}
         <span className="text-lg cursor-pointer text-gray-800 dark:text-gray-100">
           🔔
         </span>
@@ -92,9 +101,9 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           ❤️
         </span>
 
-        {/* Dark mode toggle */}
+        {/* 🌙 Dark Mode Toggle */}
         <button
-          onClick={() => setDarkMode(!darkMode)}
+          onClick={toggleDarkMode}
           className="text-gray-800 dark:text-gray-100 hover:text-green-500 transition"
         >
           {darkMode ? "☀️" : "🌙"}
@@ -108,7 +117,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           onClick={() => setIsOpen((prev) => !prev)}
           className="w-10 h-10 rounded-full overflow-hidden cursor-pointer bg-gray-300 dark:bg-gray-700 flex items-center justify-center"
         >
-          {company?.logo ? (
+          {company?.logo && (
             <Image
               src={company.logo}
               alt="Company logo"
@@ -116,7 +125,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               height={40}
               className="w-full h-full object-cover"
             />
-          ) : null}
+          )}
         </div>
 
         <div
